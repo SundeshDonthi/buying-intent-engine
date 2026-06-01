@@ -111,11 +111,33 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
 .timehint{font-size:13px;color:var(--ink3);margin-top:13px;line-height:1.5;display:flex;align-items:flex-start;gap:7px}
 .timehint::before{content:"";flex:none;width:13px;height:13px;margin-top:2px;border-radius:50%;background:radial-gradient(circle at 50% 40%,var(--blue),var(--blue-d));box-shadow:0 0 0 3px var(--blue-soft)}
 
-/* ── progress steps ── */
+/* ── progress timeline ── */
 #progressArea{margin-top:28px}
-.prog-title{display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px;color:var(--ink);margin-bottom:14px}
+.prog-card{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:20px 22px 18px;overflow:hidden}
+/* top row: spinner + label + pct */
+.prog-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
 .mini-spin{width:16px;height:16px;border-radius:50%;background:conic-gradient(from 0deg,var(--blue),rgba(38,76,215,.05));position:relative;animation:spin .8s linear infinite;flex:none}
 .mini-spin::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--white)}
+.prog-label{flex:1;font-size:13.5px;font-weight:600;color:var(--ink)}
+.prog-pct{font-size:12px;font-weight:700;color:var(--blue)}
+/* progress bar track */
+.prog-bar-track{height:6px;background:var(--line);border-radius:999px;margin-bottom:18px;overflow:hidden}
+.prog-bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--blue-l),var(--blue));transition:width .4s ease;width:0%}
+/* step nodes row */
+.prog-steps{display:flex;align-items:flex-start;position:relative}
+.prog-steps::before{content:"";position:absolute;top:14px;left:14px;right:14px;height:2px;background:var(--line);z-index:0}
+.prog-step{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;z-index:1}
+.step-node{width:28px;height:28px;border-radius:50%;border:2px solid var(--line2);background:var(--white);display:grid;place-items:center;font-size:13px;transition:all .25s;flex:none}
+.step-node.running{border-color:var(--blue);background:var(--blue-soft);box-shadow:0 0 0 4px rgba(38,76,215,.12);animation:node-pulse 1.2s ease-in-out infinite}
+.step-node.done{border-color:var(--green);background:var(--green-bg)}
+.step-node.error{border-color:var(--red);background:var(--red-bg)}
+@keyframes node-pulse{0%,100%{box-shadow:0 0 0 3px rgba(38,76,215,.12)}50%{box-shadow:0 0 0 6px rgba(38,76,215,.06)}}
+.step-label{font-size:10.5px;font-weight:600;color:var(--ink3);text-align:center;line-height:1.3;max-width:72px}
+.step-label.running{color:var(--blue)}
+.step-label.done{color:var(--green)}
+.step-badge{font-size:10px;font-weight:700;color:var(--ink3);text-align:center;min-height:14px}
+.step-badge.done{color:var(--green)}
+.step-badge.running{color:var(--blue)}
 @keyframes spin{to{transform:rotate(360deg)}}
 .prow{position:relative;display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid var(--line);background:var(--white);transition:background .18s}
 .prow:first-child{border-radius:var(--r-sm) var(--r-sm) 0 0}
@@ -174,6 +196,27 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
 .bd.pos{background:var(--green-bg);color:var(--green)}
 .bd.neg{background:var(--red-bg);color:var(--red)}
 .bd.neu{background:var(--bg);color:var(--ink2)}
+
+/* ── company info strip ── */
+.co-info-strip{display:flex;gap:0;border-bottom:1px solid var(--line);background:var(--white);overflow-x:auto}
+.co-info-item{flex:1;min-width:120px;padding:14px 20px;border-right:1px solid var(--line)}
+.co-info-item:last-child{border-right:none}
+.co-info-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-bottom:5px}
+.co-info-val{font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.co-info-val a{color:var(--blue);text-decoration:none}
+.co-info-val a:hover{text-decoration:underline}
+.co-info-val.loading{color:var(--ink3);font-weight:400;font-style:italic}
+
+/* ── ai summary + BD rec ── */
+.insight-block{padding:22px 28px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#f7f9ff,var(--white));display:flex;flex-direction:column;gap:16px}
+.insight-section{display:flex;flex-direction:column;gap:8px}
+.insight-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);display:flex;align-items:center;gap:6px}
+.insight-label::after{content:"";flex:1;height:1px;background:var(--line)}
+.insight-text{font-size:13.5px;color:var(--ink);line-height:1.65}
+.insight-text strong{color:var(--ink);font-weight:700}
+.bd-recs{display:flex;flex-direction:column;gap:8px}
+.bd-rec-item{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--ink);line-height:1.55}
+.bd-rec-dot{width:7px;height:7px;border-radius:50%;background:var(--blue);flex:none;margin-top:5px}
 
 /* ── filters ── */
 .filters{display:flex;gap:7px;flex-wrap:wrap;padding:16px 28px;border-bottom:1px solid var(--line);background:var(--white)}
@@ -234,6 +277,76 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 .hide{display:none!important}
+
+/* ── signals tab ── */
+.sigs-wrap{max-width:960px;margin:0 auto;padding:36px 24px 80px}
+.sigs-form{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:22px 24px 18px;margin-bottom:28px}
+.sigs-form .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.sigs-form label{display:block;font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.sigs-form input{width:100%;box-sizing:border-box;padding:10px 13px;border:1.5px solid var(--line2);border-radius:9px;font-size:14px;font-family:var(--sans);color:var(--ink);background:var(--bg2);outline:none;transition:border-color .15s}
+.sigs-form input:focus{border-color:var(--blue);background:#fff}
+.sigs-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sigs-hint{font-size:13px;color:var(--ink3);margin:0}
+.sigs-btns{display:flex;gap:8px;align-items:center}
+.sigs-btns .btn-ghost{background:none;border:1.5px solid var(--line2);padding:8px 16px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink2)}
+.sigs-btns .btn-ghost:hover{background:var(--bg)}
+.btn-track{background:var(--blue);color:#fff;border:none;padding:9px 20px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s;white-space:nowrap}
+.btn-track:hover{background:var(--blue-d)}
+.btn-track:disabled{background:#b0b8e8;cursor:not-allowed}
+.sigs-info{margin-top:12px;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink3)}
+.sigs-info::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--blue);flex:none}
+/* results banner */
+.sigs-result-banner{background:linear-gradient(135deg,#264CD7 0%,#1C3AA8 100%);border-radius:14px;padding:20px 24px;display:flex;align-items:center;gap:16px;margin-bottom:20px}
+.sigs-result-banner .company-badge{width:44px;height:44px;border-radius:11px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:19px;font-weight:800;color:#fff;flex:none;font-family:var(--sans)}
+.sigs-result-banner .banner-label{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.65);margin-bottom:3px}
+.sigs-result-banner .banner-company{font-size:22px;font-weight:700;color:#fff}
+/* signal result rows */
+.sig-result-row{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin-bottom:10px;display:flex;align-items:flex-start;gap:14px}
+.sig-result-row.found-pos{border-left:3px solid var(--green);background:var(--green-bg)}
+.sig-result-row.found-neg{border-left:3px solid var(--red);background:var(--red-bg)}
+.sig-result-row.found-neu{border-left:3px solid var(--orange);background:var(--orange-bg)}
+.sig-result-row .srow-icon{width:34px;height:34px;border-radius:9px;background:rgba(0,0,0,.06);display:grid;place-items:center;flex:none;font-size:16px}
+.sig-result-row .srow-main{flex:1;min-width:0}
+.sig-result-row .srow-name{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:2px}
+.sig-result-row .srow-detail{font-size:13px;color:var(--ink3);margin-bottom:6px}
+.sig-result-row .srow-ev{font-size:12px;color:var(--blue);margin-top:4px}
+.sig-result-row .srow-ev a{color:var(--blue);text-decoration:none}
+.sig-result-row .srow-ev a:hover{text-decoration:underline}
+.sig-result-row .srow-right{text-align:right;flex:none}
+.sig-result-row .srow-verdict{font-size:13px;font-weight:700}
+.sig-result-row .srow-verdict.yes{color:var(--green)}
+.sig-result-row .srow-verdict.no{color:var(--ink3)}
+.sig-result-row .srow-score{font-size:12px;color:var(--ink3);margin-top:2px}
+.sigs-summary{font-size:14px;font-weight:600;color:var(--blue);margin:4px 0 20px}
+/* status filter pills */
+.sigs-status-row{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.status-pill{padding:5px 14px;border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer;border:none;background:var(--line);color:var(--ink3);transition:all .15s}
+.status-pill.live{background:#e3f9ed;color:#1B7A4B}
+.status-pill.limited{background:#fff3e0;color:#b45309}
+.status-pill.coming{background:var(--line);color:var(--ink3)}
+/* category filters */
+.sigs-cats{display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap}
+.cat-pill{padding:6px 16px;border-radius:999px;border:1.5px solid var(--line2);font-size:13px;font-weight:500;cursor:pointer;background:var(--white);color:var(--ink3);transition:all .15s}
+.cat-pill:hover{border-color:var(--blue-l);color:var(--blue)}
+.cat-pill.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+/* signal card grid */
+.sigs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:700px){.sigs-grid{grid-template-columns:1fr}.sigs-form .row2{grid-template-columns:1fr}}
+.sig-card{background:var(--white);border:1.5px solid var(--line);border-radius:14px;padding:16px;position:relative;transition:border-color .15s;display:flex;flex-direction:column;gap:10px}
+.sig-card:hover{border-color:var(--blue-l)}
+.sig-card.selected{border-color:var(--blue);background:var(--blue-soft)}
+.sig-card.limited-card{opacity:.75}
+.sig-card .card-top{display:flex;align-items:flex-start;justify-content:space-between}
+.sig-card .card-cb{width:18px;height:18px;border-radius:5px;border:2px solid var(--line2);cursor:pointer;flex:none;appearance:none;-webkit-appearance:none;background:#fff;transition:all .15s;margin-top:1px}
+.sig-card .card-cb:checked{background:var(--blue);border-color:var(--blue);background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 10 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 4l3 3 5-6' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:center;background-size:10px}
+.sig-card .card-status{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;display:flex;align-items:center;gap:5px}
+.sig-card .card-status.live{background:#e3f9ed;color:#1B7A4B}
+.sig-card .card-status.limited{background:#fff3e0;color:#b45309}
+.sig-card .card-icon{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:17px;flex:none}
+.sig-card .card-name{font-size:14px;font-weight:700;color:var(--ink);line-height:1.3}
+.sig-card .card-desc{font-size:12.5px;color:var(--ink3);line-height:1.5;flex:1}
+.sig-card .card-source{font-size:11px;color:var(--ink3);opacity:.7}
+
 </style>
 </head>
 <body>
@@ -292,11 +405,15 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
 
   <!-- Progress -->
   <div id="progressArea" class="hide">
-    <div class="prog-title">
-      <div class="mini-spin" id="miniSpin"></div>
-      <span id="prog-title-text">Collecting signals…</span>
+    <div class="prog-card">
+      <div class="prog-header">
+        <div class="mini-spin" id="miniSpin"></div>
+        <span class="prog-label" id="prog-title-text">Collecting signals…</span>
+        <span class="prog-pct" id="prog-pct">0%</span>
+      </div>
+      <div class="prog-bar-track"><div class="prog-bar-fill" id="progBar"></div></div>
+      <div class="prog-steps" id="progRows"></div>
     </div>
-    <div class="card" style="overflow:hidden" id="progRows"></div>
   </div>
 
   <!-- Results -->
@@ -304,8 +421,12 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
     <div class="card" id="resultCard">
       <!-- header -->
       <div class="reshead" id="reshead"></div>
+      <!-- company info strip -->
+      <div class="co-info-strip" id="coInfoStrip"></div>
       <!-- score -->
       <div class="summary" id="scoreSummary"></div>
+      <!-- insights -->
+      <div class="insight-block" id="insightBlock" style="display:none"></div>
       <!-- filters -->
       <div class="filters" id="sigFilters">
         <button class="on" onclick="filterSigs('all',this)">All</button>
@@ -330,11 +451,53 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
 </div>
 <!-- Signals tab -->
 <div class="wrap hide" id="signals-pane">
-  <div style="max-width:680px;margin:0 auto;padding:48px 0 80px">
-    <div class="kicker">Signals</div>
-    <h1 style="font-family:var(--serif);font-size:clamp(26px,3.5vw,38px);font-weight:400;line-height:1.1;margin:0 0 18px">All <em style="color:var(--blue);font-style:italic">14 signals</em> tracked.</h1>
-    <p style="font-size:15px;line-height:1.7;color:var(--ink2);margin-bottom:32px">Each signal is scored and weighted. Positive signals sum to 100, negative signals sum to 100. The total score ranges from -100 to +100.</p>
-    <div id="signals-table"></div>
+  <div class="sigs-wrap">
+
+    <!-- hero -->
+    <div class="kicker">Coverage</div>
+    <h1 style="font-family:var(--serif);font-size:clamp(26px,3.5vw,40px);font-weight:400;line-height:1.08;margin:0 0 10px">Every signal the engine <em style="color:var(--blue);font-style:italic">checks</em>.</h1>
+    <p style="font-size:15px;line-height:1.7;color:var(--ink2);margin:0 0 28px;max-width:580px">This is what the engine looks for on every account. Live signals run now from public sources. Limited signals are in progress — we are expanding coverage.</p>
+
+    <!-- track form -->
+    <div class="sigs-form">
+      <div class="row2">
+        <div><label>Track signals for a company</label><input id="sigs-company" placeholder="e.g. Williams-Sonoma" autocomplete="off" oninput="updateTrackBtn()"></div>
+        <div><label>Website (optional)</label><input id="sigs-domain" placeholder="e.g. williams-sonoma.com" autocomplete="off"></div>
+      </div>
+      <div class="sigs-toolbar">
+        <p class="sigs-hint">Tick the live signals below, then track just those for this company.</p>
+        <div class="sigs-btns">
+          <button class="btn-ghost" onclick="selectAllLive()">Select all live</button>
+          <button class="btn-ghost" onclick="clearSigSelection()">Clear</button>
+          <button class="btn-track" id="sigs-track-btn" onclick="runSignalsScan()" disabled>Track 0 signals</button>
+        </div>
+      </div>
+      <div class="sigs-info">Tracking checks only the signals you select. About 30 to 60 seconds.</div>
+    </div>
+
+    <!-- results area -->
+    <div id="sigs-results" class="hide"></div>
+
+    <!-- status pills -->
+    <div class="sigs-status-row">
+      <span class="status-pill live">● 16 Live now</span>
+      <span class="status-pill limited">◐ 10 Limited</span>
+    </div>
+
+    <!-- category filters -->
+    <div class="sigs-cats" id="sigs-cats">
+      <button class="cat-pill active" onclick="filterSigCards('all',this)">All</button>
+      <button class="cat-pill" onclick="filterSigCards('funding',this)">Funding</button>
+      <button class="cat-pill" onclick="filterSigCards('hiring',this)">Hiring</button>
+      <button class="cat-pill" onclick="filterSigCards('leadership',this)">Leadership</button>
+      <button class="cat-pill" onclick="filterSigCards('growth',this)">Growth</button>
+      <button class="cat-pill" onclick="filterSigCards('risk',this)">Risk</button>
+      <button class="cat-pill" onclick="filterSigCards('other',this)">Other</button>
+    </div>
+
+    <!-- signal grid -->
+    <div class="sigs-grid" id="sigs-grid"></div>
+
   </div>
 </div>
 
@@ -360,7 +523,10 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
     <h2>Share feedback</h2>
     <p>This is an MVP built to gather feedback, and your input shapes what we build next.</p>
     <div class="about-actions">
-      <button class="btn primary" onclick="showToast('Feedback form coming soon!')" style="padding:10px 22px;border-radius:10px;font-size:14px;font-weight:600">Open the feedback form</button>
+      <a href="https://forms.fillout.com/t/e6saG1r8j6us" target="_blank" rel="noopener" class="btn primary" style="padding:10px 22px;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:7px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Open the feedback form
+      </a>
     </div>
   </div>
 </div>
@@ -380,44 +546,158 @@ function switchTab(tab) {
     const btn = document.getElementById('tab-' + t);
     if (btn) btn.classList.toggle('active', t === tab);
   });
-  if (tab === 'signals') renderSignalsTable();
+  if (tab === 'signals') renderSigCards();
 }
 
-function renderSignalsTable() {
-  const container = document.getElementById('signals-table');
-  if (container.dataset.rendered) return;
-  container.dataset.rendered = '1';
-  const SIGNALS = [
-    {name:'rfp_rfq_rfi',type:'positive',weight:25,desc:'Active RFP/RFQ/RFI — company is literally evaluating vendors'},
-    {name:'erp_crm_migration',type:'positive',weight:20,desc:'Actively implementing/migrating ERP, CRM, or cloud platform'},
-    {name:'leadership_change',type:'positive',weight:15,desc:'C-suite/VP hire or departure — new exec typically re-evaluates vendors'},
-    {name:'ma_activity',type:'positive',weight:12,desc:'M&A filing — creates consolidation needs and new spend cycles'},
-    {name:'operational_pain',type:'positive',weight:10,desc:'Confirmed outage/breach/failure — creates urgency for better tooling'},
-    {name:'hiring_activity',type:'positive',weight:8,desc:'Active job postings in tech/ops roles — investment signal'},
-    {name:'geographic_expansion',type:'positive',weight:5,desc:'Opening new offices/markets — scaling operations'},
-    {name:'tech_stack_change',type:'positive',weight:3,desc:'Tech stack fingerprint suggests active modernization'},
-    {name:'ipo_preparation',type:'positive',weight:2,desc:'S-1 filing — companies invest in scalable systems pre-IPO'},
-    {name:'bankruptcy',type:'negative',weight:45,desc:'Bankruptcy filing — near-certain disqualifier'},
-    {name:'layoffs',type:'negative',weight:25,desc:'Confirmed layoffs — strong budget pressure signal'},
-    {name:'budget_cuts',type:'negative',weight:15,desc:'Budget cuts / cost reduction initiatives in news'},
-    {name:'facility_closures',type:'negative',weight:10,desc:'Office/facility closures — contraction or operational downsizing'},
-    {name:'no_job_openings',type:'negative',weight:5,desc:'No job openings found — suggests limited growth investment'},
-    {name:'reorganization',type:'neutral',weight:55,desc:'Restructuring/reorg SEC filing — could go either way'},
-    {name:'internal_promotion',type:'neutral',weight:45,desc:'Internal promotion — could signal stability or strategic shift'},
-  ];
-  const typeColor = {positive:'var(--green)',negative:'var(--red)',neutral:'var(--orange)'};
-  const typeBg = {positive:'var(--green-bg)',negative:'var(--red-bg)',neutral:'var(--orange-bg)'};
-  container.innerHTML = SIGNALS.map(s => `
-    <div style="display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)">
-      <div style="flex:none;width:36px;height:36px;border-radius:9px;background:${typeBg[s.type]};display:grid;place-items:center">
-        <span style="font-size:13px;font-weight:800;color:${typeColor[s.type]}">${s.weight}</span>
+// ── Signal definitions ──────────────────────────────────────────────────────
+const SIG_DEFS = [
+  {id:'rfp_rfq_rfi',     name:'RFP / RFQ / RFI',         status:'live',    cat:'other',      type:'positive', icon:'📄', iconBg:'#EEF2FF', desc:'Detect when a company opens a formal request for proposal, quote or information.', source:'Gov portals, news'},
+  {id:'erp_crm_migration',name:'ERP / CRM Migration',     status:'live',    cat:'growth',     type:'positive', icon:'⚙️', iconBg:'#E7F6EE', desc:'Detect active technology platform migrations or digital transformation initiatives.', source:'News'},
+  {id:'leadership_change',name:'New Leadership Hire',      status:'live',    cat:'leadership', type:'positive', icon:'👤', iconBg:'#EEF2FF', desc:'Detect when a company hires or loses a C-level, VP or director.', source:'News, LinkedIn'},
+  {id:'ma_activity',      name:'Merger or Acquisition',    status:'live',    cat:'funding',    type:'positive', icon:'🔄', iconBg:'#E7F6EE', desc:'Detect when a company announces a merger or acquisition.', source:'SEC, news'},
+  {id:'operational_pain', name:'Operational Failure',      status:'live',    cat:'risk',       type:'positive', icon:'⚠️', iconBg:'#FFF1E8', desc:'Detect confirmed outages, data breaches or system failures creating urgency.', source:'News'},
+  {id:'hiring_activity',  name:'Relevant Hiring',          status:'live',    cat:'hiring',     type:'positive', icon:'👥', iconBg:'#E7F6EE', desc:'Detect hiring for technology, operations or analytics roles — signals investment.', source:'SerpAPI jobs'},
+  {id:'geographic_expansion',name:'Geographic Expansion',  status:'live',    cat:'growth',     type:'positive', icon:'🌍', iconBg:'#E7F6EE', desc:'Detect when a company opens new offices or enters new markets.', source:'News'},
+  {id:'tech_stack_change',name:'Tech Stack Signal',         status:'live',    cat:'growth',     type:'positive', icon:'🔧', iconBg:'#EEF2FF', desc:'Detect modern cloud and analytics tooling via HTTP fingerprinting.', source:'HTTP headers'},
+  {id:'ipo_preparation',  name:'IPO Preparation',           status:'live',    cat:'funding',    type:'positive', icon:'📈', iconBg:'#E7F6EE', desc:'Detect S-1 filings — companies invest in scalable systems before going public.', source:'SEC S-1'},
+  {id:'bankruptcy',       name:'Bankruptcy Filing',         status:'live',    cat:'risk',       type:'negative', icon:'🏛️', iconBg:'#FBEBE9', desc:'Detect Chapter 11/7 filings — near-certain disqualifier for new spend.', source:'SEC 8-K Item 1.03'},
+  {id:'layoffs',          name:'Layoffs',                   status:'live',    cat:'risk',       type:'negative', icon:'📉', iconBg:'#FBEBE9', desc:'Detect confirmed workforce reductions — strong budget pressure signal.', source:'Layoffs.fyi, news'},
+  {id:'budget_cuts',      name:'Budget Cuts',               status:'live',    cat:'risk',       type:'negative', icon:'✂️', iconBg:'#FBEBE9', desc:'Detect cost-cutting announcements and spending reduction initiatives.', source:'News'},
+  {id:'facility_closures',name:'Facility Closures',         status:'live',    cat:'risk',       type:'negative', icon:'🏢', iconBg:'#FBEBE9', desc:'Detect office or facility closures indicating operational contraction.', source:'News'},
+  {id:'no_job_openings',  name:'No Job Openings',           status:'live',    cat:'hiring',     type:'negative', icon:'🔍', iconBg:'#FBEBE9', desc:'No open roles found — suggests the company is not actively investing.', source:'SerpAPI jobs'},
+  {id:'reorganization',   name:'Reorganization',            status:'live',    cat:'risk',       type:'neutral',  icon:'🔀', iconBg:'#FFF1E8', desc:'Detect SEC restructuring filings — could go either way for budget availability.', source:'SEC 8-K Item 2.05'},
+  {id:'internal_promotion',name:'Internal Promotion',       status:'live',    cat:'leadership', type:'neutral',  icon:'⬆️', iconBg:'#FFF1E8', desc:'Detect internal role changes — signals stability or strategic shift.', source:'News'},
+  {id:'new_funding',      name:'New Funding Raised',        status:'limited', cat:'funding',    type:'positive', icon:'💰', iconBg:'#E7F6EE', desc:'Detect when a company announces a new funding round.', source:'SEC Form D, news'},
+  {id:'revenue_growth',   name:'Revenue Growth Beat',       status:'limited', cat:'funding',    type:'positive', icon:'📊', iconBg:'#E7F6EE', desc:'Detect earnings beats or revenue growth announcements.', source:'Earnings reports, news'},
+  {id:'product_launch',   name:'Product Launch',            status:'limited', cat:'growth',     type:'positive', icon:'🚀', iconBg:'#E7F6EE', desc:'Detect new product or feature launches signaling R&D investment.', source:'Press releases, news'},
+  {id:'partnership',      name:'Partnership Announced',     status:'limited', cat:'growth',     type:'positive', icon:'🤝', iconBg:'#EEF2FF', desc:'Detect strategic partnership or reseller agreements.', source:'News, press releases'},
+  {id:'customer_win',     name:'Customer Win',              status:'limited', cat:'growth',     type:'positive', icon:'🏆', iconBg:'#E7F6EE', desc:'Detect public customer wins, case studies or testimonials.', source:'Company blog, news'},
+  {id:'ad_spend',         name:'Ad Spend Increase',         status:'limited', cat:'growth',     type:'positive', icon:'📢', iconBg:'#EEF2FF', desc:'Detect rising ad spend as a proxy for growth investment.', source:'SimilarWeb, ad platforms'},
+  {id:'website_traffic',  name:'Website Traffic Spike',     status:'limited', cat:'growth',     type:'positive', icon:'📡', iconBg:'#EEF2FF', desc:'Detect significant increases in website traffic.', source:'SimilarWeb'},
+  {id:'analyst_mention',  name:'Analyst Report Mention',    status:'limited', cat:'funding',    type:'positive', icon:'📑', iconBg:'#E7F6EE', desc:'Detect when the company is cited in analyst or research reports.', source:'News, analyst feeds'},
+  {id:'conference',       name:'Conference / Event',        status:'limited', cat:'other',      type:'neutral',  icon:'🎤', iconBg:'#FFF1E8', desc:'Detect speaking slots or sponsorships — signals public investment.', source:'Event websites'},
+  {id:'linkedin_spike',   name:'LinkedIn Engagement Spike', status:'limited', cat:'other',      type:'neutral',  icon:'💼', iconBg:'#FFF1E8', desc:'Detect a sudden spike in LinkedIn posts or employee activity.', source:'LinkedIn'},
+];
+
+let sigsSelectedIds = new Set();
+let sigsCurrentCat = 'all';
+
+function renderSigCards() {
+  const grid = document.getElementById('sigs-grid');
+  if (grid.dataset.rendered) return;
+  grid.dataset.rendered = '1';
+  _buildSigCards();
+}
+
+function _buildSigCards() {
+  const grid = document.getElementById('sigs-grid');
+  const filtered = sigsCurrentCat === 'all' ? SIG_DEFS : SIG_DEFS.filter(s => s.cat === sigsCurrentCat);
+  grid.innerHTML = filtered.map(s => {
+    const isLive = s.status === 'live';
+    const checked = sigsSelectedIds.has(s.id);
+    return `<div class="sig-card${checked?' selected':''}${!isLive?' limited-card':''}" data-id="${s.id}">
+      <div class="card-top">
+        ${isLive
+          ? `<input type="checkbox" class="card-cb" id="cb-${s.id}" ${checked?'checked':''} onchange="toggleSig('${s.id}',this)">`
+          : '<div style="width:18px"></div>'}
+        <span class="card-status ${s.status}">${s.status === 'live' ? '● Live' : '◐ Limited'}</span>
       </div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:3px">${fmtName(s.name)}</div>
-        <div style="font-size:13px;color:var(--ink3);line-height:1.5">${s.desc}</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="card-icon" style="background:${s.iconBg}">${s.icon}</div>
+        <div class="card-name">${s.name}</div>
       </div>
-      <span style="flex:none;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;background:${typeBg[s.type]};color:${typeColor[s.type]};text-transform:uppercase">${s.type}</span>
-    </div>`).join('');
+      <div class="card-desc">${s.desc}</div>
+      <div class="card-source">Source: ${s.source}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleSig(id, cb) {
+  if (cb.checked) sigsSelectedIds.add(id); else sigsSelectedIds.delete(id);
+  const card = document.querySelector(`.sig-card[data-id="${id}"]`);
+  if (card) card.classList.toggle('selected', cb.checked);
+  updateTrackBtn();
+}
+
+function selectAllLive() {
+  SIG_DEFS.filter(s => s.status === 'live').forEach(s => sigsSelectedIds.add(s.id));
+  _buildSigCards();
+  updateTrackBtn();
+}
+
+function clearSigSelection() {
+  sigsSelectedIds.clear();
+  _buildSigCards();
+  updateTrackBtn();
+}
+
+function updateTrackBtn() {
+  const btn = document.getElementById('sigs-track-btn');
+  const company = document.getElementById('sigs-company').value.trim();
+  const n = sigsSelectedIds.size;
+  btn.textContent = n === 0 ? 'Track 0 signals' : `Track ${n} signal${n===1?'':'s'}`;
+  btn.disabled = n === 0 || !company;
+}
+
+function filterSigCards(cat, el) {
+  sigsCurrentCat = cat;
+  document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  _buildSigCards();
+}
+
+async function runSignalsScan() {
+  const company = document.getElementById('sigs-company').value.trim();
+  const domain  = document.getElementById('sigs-domain').value.trim();
+  if (!company || sigsSelectedIds.size === 0) return;
+  const btn = document.getElementById('sigs-track-btn');
+  btn.disabled = true; btn.textContent = 'Scanning…';
+  const resultsDiv = document.getElementById('sigs-results');
+  const n = sigsSelectedIds.size;
+  resultsDiv.innerHTML = `
+    <div class="sigs-result-banner">
+      <div class="company-badge">${company.charAt(0).toUpperCase()}</div>
+      <div><div class="banner-label">Tracking ${n} signal${n===1?'':'s'}</div><div class="banner-company">${esc(company)}</div></div>
+    </div>
+    <div id="sigs-rows"><div style="padding:20px;color:var(--ink3);font-size:14px">Collecting signals…</div></div>
+    <div class="sigs-summary" id="sigs-summary"></div>`;
+  resultsDiv.classList.remove('hide');
+  resultsDiv.scrollIntoView({behavior:'smooth',block:'nearest'});
+  const params = new URLSearchParams({company, signals:[...sigsSelectedIds].join(',')});
+  if (domain) params.set('domain', domain);
+  const es = new EventSource(`/analyze?${params}`);
+  es.addEventListener('result', e => {
+    const d = JSON.parse(e.data);
+    const selected = d.signals.filter(s => sigsSelectedIds.has(s.name));
+    const foundCount = selected.filter(s => s.found).length;
+    document.getElementById('sigs-rows').innerHTML = selected.map(s => {
+      const def = SIG_DEFS.find(x => x.id === s.name) || {};
+      const cls = s.found ? (s.type==='negative'?'found-neg':s.type==='neutral'?'found-neu':'found-pos') : '';
+      const evHtml = s.found && s.evidence && s.evidence.length
+        ? s.evidence.slice(0,3).map(ev => ev.url
+            ? `<div class="srow-ev"><a href="${ev.url}" target="_blank" rel="noopener">↗ ${(ev.title||ev.url).substring(0,90)}</a></div>`
+            : `<div class="srow-ev" style="color:var(--ink3)">${ev.title||''}</div>`).join('')
+        : '';
+      const sc = s.score_contribution;
+      return `<div class="sig-result-row ${cls}">
+        <div class="srow-icon" style="background:${def.iconBg||'#f4f4f6'}">${def.icon||'●'}</div>
+        <div class="srow-main">
+          <div class="srow-name">${fmtName(s.name)} <span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:5px;background:${s.type==='positive'?'var(--green-bg)':s.type==='negative'?'var(--red-bg)':'var(--orange-bg)'};color:${s.type==='positive'?'var(--green)':s.type==='negative'?'var(--red)':'var(--orange)'}">${s.type==='positive'?'Positive':s.type==='negative'?'Risk':'Context'}</span></div>
+          <div class="srow-detail">${s.detail}</div>${evHtml}
+        </div>
+        <div class="srow-right">
+          <div class="srow-verdict ${s.found?'yes':'no'}">${s.found?'Detected':'Not found'}</div>
+          ${s.found && sc !== 0 ? `<div class="srow-score" style="color:${sc>0?'var(--green)':'var(--red)'}">${sc>0?'+':''}${sc} pts</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    document.getElementById('sigs-summary').textContent =
+      `${foundCount} of ${selected.length} selected signal${selected.length===1?'':'s'} detected`;
+    es.close();
+    btn.disabled = false;
+    btn.textContent = `Track ${sigsSelectedIds.size} signal${sigsSelectedIds.size===1?'':'s'}`;
+  });
+  es.onerror = () => { es.close(); btn.disabled=false; btn.textContent=`Track ${sigsSelectedIds.size} signal${sigsSelectedIds.size===1?'':'s'}`; showToast('Scan error — please retry'); };
 }
 
 function shareResults() {
@@ -430,11 +710,11 @@ function shareResults() {
 }
 
 const STEP_META = {
-  sec_edgar:  { icon: '🏛️', label: 'SEC EDGAR filings' },
-  news:       { icon: '📰', label: 'News signals' },
-  jobs:       { icon: '💼', label: 'Job postings' },
-  layoffs:    { icon: '📉', label: 'Layoffs.fyi + news' },
-  tech_stack: { icon: '🔍', label: 'Tech stack fingerprint' },
+  sec_edgar:  { icon: '🏛️', label: 'SEC EDGAR filings',      shortLabel: 'SEC\nFilings' },
+  news:       { icon: '📰', label: 'News signals',            shortLabel: 'News' },
+  jobs:       { icon: '💼', label: 'Job postings',            shortLabel: 'Jobs' },
+  layoffs:    { icon: '📉', label: 'Layoffs.fyi + news',      shortLabel: 'Layoffs' },
+  tech_stack: { icon: '🔍', label: 'Tech stack fingerprint',  shortLabel: 'Tech\nStack' },
 };
 
 const INTENT_CLASS = {
@@ -455,8 +735,11 @@ const INTENT_ICON = {
 
 // ── Analysis ───────────────────────────────────────────────────────────────
 function startAnalysis() {
-  const company = document.getElementById('inp-company').value.trim();
-  if (!company) { document.getElementById('inp-company').focus(); return; }
+  const rawCompany = document.getElementById('inp-company').value.trim();
+  if (!rawCompany) { document.getElementById('inp-company').focus(); return; }
+  // Normalize to title case so "nike" → "Nike" in the UI immediately
+  const company = rawCompany.replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+  document.getElementById('inp-company').value = company;
   const domain = document.getElementById('inp-domain').value.trim();
 
   setStatus('working', 'Scanning…');
@@ -464,35 +747,61 @@ function startAnalysis() {
   document.getElementById('progressArea').classList.remove('hide');
   document.getElementById('resultArea').classList.add('hide');
   document.getElementById('progRows').innerHTML = '';
+  document.getElementById('progBar').style.width = '0%';
+  document.getElementById('prog-pct').textContent = '0%';
   document.getElementById('prog-title-text').textContent = `Analyzing "${company}"…`;
-  document.getElementById('miniSpin').style.display = 'block';
+  document.getElementById('miniSpin').style.display = '';
+
+  let _totalSteps = 5;
+  let _doneSteps = 0;
 
   const params = new URLSearchParams({ company });
   if (domain) params.append('domain', domain);
   const es = new EventSource(`/analyze?${params}`);
 
-  es.addEventListener('start', () => {});
+  es.addEventListener('start', e => {
+    const d = JSON.parse(e.data);
+    _totalSteps = d.total_steps || 5;
+    // Pre-render all step nodes as waiting
+    const keys = Object.keys(STEP_META);
+    document.getElementById('progRows').innerHTML = keys.map(k => {
+      const m = STEP_META[k];
+      return `<div class="prog-step" id="pstep-${k}">
+        <div class="step-node waiting" id="snode-${k}">${m.icon}</div>
+        <div class="step-label" id="slabel-${k}">${m.shortLabel}</div>
+        <div class="step-badge" id="sbadge-${k}"></div>
+      </div>`;
+    }).join('');
+  });
 
   es.addEventListener('progress', e => {
     const d = JSON.parse(e.data);
-    const meta = STEP_META[d.key] || { icon: '⚙️', label: d.label };
-    let row = document.getElementById(`prow-${d.key}`);
-    if (!row) {
-      row = document.createElement('div');
-      row.id = `prow-${d.key}`;
-      row.className = 'prow waiting';
-      row.innerHTML = `<div class="pic">${meta.icon}</div><div class="pmain"><div class="pname">${meta.label}</div></div><div class="pbadge" id="pb-${d.key}"></div>`;
-      document.getElementById('progRows').appendChild(row);
+    const node  = document.getElementById(`snode-${d.key}`);
+    const label = document.getElementById(`slabel-${d.key}`);
+    const badge = document.getElementById(`sbadge-${d.key}`);
+    if (!node) return;
+    node.className  = `step-node ${d.status}`;
+    label.className = `step-label ${d.status}`;
+    badge.className = `step-badge ${d.status}`;
+    if (d.status === 'running') {
+      badge.textContent = 'Checking…';
+      document.getElementById('prog-title-text').textContent = `Checking ${STEP_META[d.key]?.label || d.label}…`;
+    } else if (d.status === 'done') {
+      badge.textContent = `${d.found}/${d.total} hit`;
+      _doneSteps++;
+      const pct = Math.round((_doneSteps / _totalSteps) * 100);
+      document.getElementById('progBar').style.width = pct + '%';
+      document.getElementById('prog-pct').textContent = pct + '%';
+    } else if (d.status === 'error') {
+      badge.textContent = 'error';
+      _doneSteps++;
     }
-    row.className = `prow ${d.status}`;
-    const badge = document.getElementById(`pb-${d.key}`);
-    if (d.status === 'running') badge.textContent = '…';
-    else if (d.status === 'done') badge.textContent = `${d.found}/${d.total} hit`;
-    else if (d.status === 'error') badge.textContent = 'error';
   });
 
   es.addEventListener('result', e => {
     es.close();
+    document.getElementById('progBar').style.width = '100%';
+    document.getElementById('prog-pct').textContent = '100%';
     document.getElementById('miniSpin').style.display = 'none';
     document.getElementById('prog-title-text').textContent = 'Analysis complete';
     setStatus('ready', 'Ready');
@@ -503,6 +812,7 @@ function startAnalysis() {
   es.onerror = () => {
     es.close();
     document.getElementById('prog-title-text').textContent = 'Connection error — please retry';
+    document.getElementById('miniSpin').style.display = 'none';
     setStatus('ready', 'Ready');
     document.getElementById('btn-analyze').disabled = false;
   };
@@ -554,6 +864,107 @@ function renderResult(d) {
 
   renderSignals(allSignals, currentFilter);
   document.getElementById('resultArea').classList.remove('hide');
+
+  // Show company info strip with loading state, then fetch
+  renderCoInfoStrip(d.company, d.domain, null);
+  fetchCompanyInfo(d.company, d.domain);
+
+  // Render insights
+  renderInsights(d);
+}
+
+function renderCoInfoStrip(company, domain, info) {
+  const strip = document.getElementById('coInfoStrip');
+  const website = cleanDomain(domain);
+  const loading = '<span class="loading">Loading…</span>';
+  const fields = [
+    { label: 'Company',    val: info ? esc(info.name || company) : esc(company) },
+    { label: 'Industry',   val: info ? (info.industry ? esc(info.industry) : '—') : loading },
+    { label: 'Revenue',    val: info ? (info.revenue  ? esc(info.revenue)  : '—') : loading },
+    { label: 'Headquarters', val: info ? (info.hq     ? esc(info.hq)       : '—') : loading },
+    { label: 'Website',    val: `<a href="${esc(domain)}" target="_blank">${esc(website)}</a>` },
+  ];
+  strip.innerHTML = fields.map(f => `
+    <div class="co-info-item">
+      <div class="co-info-label">${f.label}</div>
+      <div class="co-info-val">${f.val}</div>
+    </div>`).join('');
+}
+
+async function fetchCompanyInfo(company, domain) {
+  try {
+    const r = await fetch(`/company-info?company=${encodeURIComponent(company)}`);
+    if (!r.ok) return;
+    const info = await r.json();
+    if (info && (info.name || info.description)) {
+      renderCoInfoStrip(company, domain, info);
+    }
+  } catch(e) { /* silent */ }
+}
+
+function renderInsights(d) {
+  const block = document.getElementById('insightBlock');
+  const found = d.signals.filter(s => s.found);
+  if (!found.length) { block.style.display = 'none'; return; }
+
+  // Summary
+  const topPos = found.filter(s => s.type === 'positive').slice(0, 3).map(s => fmtName(s.name).toLowerCase());
+  const topNeg = found.filter(s => s.type === 'negative').slice(0, 2).map(s => fmtName(s.name).toLowerCase());
+  let summary = `<strong>${esc(d.company)}</strong> shows <strong>${esc(d.intent_level)}</strong> buying intent`;
+  if (d.total_score > 0) summary += ` with a score of <strong>+${d.total_score}</strong>`;
+  else if (d.total_score < 0) summary += ` with a score of <strong>${d.total_score}</strong>`;
+  summary += '.';
+  if (topPos.length) summary += ` Key positive signals include ${topPos.join(', ')}.`;
+  if (topNeg.length) summary += ` Risk signals: ${topNeg.join(', ')}.`;
+
+  // BD Recommendations
+  const recs = [];
+  const hasSignal = name => found.some(s => s.name === name);
+
+  if (hasSignal('leadership_change') || hasSignal('internal_promotion')) {
+    recs.push('New leadership is in place — incoming leaders often re-evaluate vendors, making this a prime window to get in front of them.');
+  }
+  if (hasSignal('erp_crm_migration')) {
+    recs.push('An active ERP/CRM migration signals their stack is open for change — lead with how your product fits into or simplifies that transition.');
+  }
+  if (hasSignal('hiring_activity')) {
+    recs.push('They are growing fast — pitch around scaling efficiently without adding headcount.');
+  }
+  if (hasSignal('ipo_preparation') || hasSignal('ma_activity')) {
+    recs.push('IPO prep or M&A creates operational pressure — emphasize visibility, reporting, and process standardization.');
+  }
+  if (hasSignal('geographic_expansion')) {
+    recs.push('They are expanding into new markets — highlight how your product supports multi-region operations.');
+  }
+  if (hasSignal('tech_stack_change')) {
+    recs.push('Their tech stack is shifting — position your product as a natural complement to what they are adopting.');
+  }
+  if (hasSignal('operational_pain')) {
+    recs.push('Operational pain signals are present — open with a diagnostic question about their current process.');
+  }
+  if (hasSignal('layoffs') || hasSignal('budget_cuts')) {
+    recs.push('Budget pressure is evident — lead with ROI and tool consolidation rather than new spend.');
+  }
+  if (!recs.length) {
+    if (d.intent_level === 'Strong Buyer' || d.intent_level === 'Potential Buyer') {
+      recs.push('Strong signals detected — reach out now with a pitch tied to their recent activity.');
+    } else {
+      recs.push('No strong triggers right now — consider a nurture approach and revisit in 30–60 days.');
+    }
+  }
+  // Cap at 2 most relevant sentences
+  const topRecs = recs.slice(0, 2);
+
+  block.style.display = 'flex';
+  block.innerHTML = `
+    <div class="insight-section">
+      <div class="insight-label">Summary</div>
+      <div class="insight-text">${summary}</div>
+    </div>
+    <div class="insight-section">
+      <div class="insight-label">How BD Should Reach Out</div>
+      <div class="insight-text">${esc(topRecs.join(' '))}</div>
+    </div>`;
 }
 
 function renderSignals(signals, filter) {
