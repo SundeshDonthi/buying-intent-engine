@@ -154,16 +154,19 @@ _ALUMNI_RE = re.compile(r'\b(former|ex[-\s]|alumni|alumnus)\b', re.IGNORECASE)
 
 
 def _filter_articles(company_name: str, articles: list[dict], keywords: list[str],
-                     exclude_alumni: bool = False) -> list[dict]:
-    """Keep articles where (1) the company name appears AND (2) a signal keyword appears."""
+                     exclude_alumni: bool = False, max_days: int = 365) -> list[dict]:
+    """Keep articles where (1) the company name appears, (2) a signal keyword appears,
+    and (3) the article is within max_days of today."""
     matched = []
     for article in articles:
         title = article["title"]
         title_lower = title.lower()
         if not company_in_text(company_name, title):
             continue
+        # Drop stale articles regardless of source
+        if not is_recent(article.get("pubDate", ""), max_days=max_days):
+            continue
         # For leadership signals, skip articles that reference alumni of the company
-        # e.g. "Former Stripe CTO joins Anthropic" — Stripe is not changing leadership
         if exclude_alumni and _ALUMNI_RE.search(title):
             continue
         if any(kw in title_lower for kw in keywords):
