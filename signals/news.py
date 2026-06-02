@@ -1,7 +1,8 @@
-"""Google News RSS collector — free, no API key required."""
+"""News signal collector — SerpAPI primary, Google News RSS fallback."""
 
+import os
 import re
-import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from urllib.parse import quote
 
@@ -84,15 +85,41 @@ class NewsSignal:
     articles: list[dict] = field(default_factory=list)
 
 
+def _fetch_serpapi(query: str, max_results: int = 15) -> list[dict]:
+    """Fetch news via SerpAPI Google News — works from any server IP."""
+    api_key = os.getenv("SERPAPI_KEY", "")
+    if not api_key:
+        return []
+    try:
+        resp = requests.get(
+            "https://serpapi.com/search",
+            params={"engine": "google_news", "q": query, "api_key": api_key, "num": max_results},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        items = resp.json().get("news_results", [])[:max_results]
+        return [
+            {
+                "title": item.get("title", ""),
+                "link": item.get("link", ""),
+                "pubDate": item.get("date", ""),
+                "source": item.get("source", {}).get("name", "") if isinstance(item.get("source"), dict) else str(item.get("source", "")),
+            }
+            for item in items
+        ]
+    except Exception:
+        return []
+
+
 def _fetch_rss(query: str, max_results: int = 15) -> list[dict]:
+    """Fetch news via Google News RSS — free but may be blocked on cloud servers."""
     url = GNEWS_RSS.format(query=quote(query))
     try:
-        resp = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
+        resp = requests.get(url, timeout=6, headers={"User-Agent": "Mozilla/5.0"})
         resp.raise_for_status()
         soup = BeautifulSoup(resp.content, "xml")
         items = soup.find_all("item")[:max_results]
-        time.sleep(0.3)
-        return [
+        results = [
             {
                 "title": item.find("title").text if item.find("title") else "",
                 "link": item.find("link").text if item.find("link") else "",
@@ -101,8 +128,17 @@ def _fetch_rss(query: str, max_results: int = 15) -> list[dict]:
             }
             for item in items
         ]
+        return results
     except Exception:
         return []
+
+
+def _fetch_news(query: str, max_results: int = 15) -> list[dict]:
+    """Try SerpAPI first (reliable on servers), fall back to Google News RSS."""
+    results = _fetch_serpapi(query, max_results)
+    if results:
+        return results
+    return _fetch_rss(query, max_results)
 
 
 _ALUMNI_RE = re.compile(r'\b(former|ex[-\s]|alumni|alumnus)\b', re.IGNORECASE)
@@ -128,17 +164,32 @@ def _filter_articles(company_name: str, articles: list[dict], keywords: list[str
 
 class NewsCollector:
     def collect(self, company_name: str) -> list[NewsSignal]:
-        results = []
-        for signal_name, (query_template, keywords) in SIGNAL_QUERIES.items():
+        signals = list(SIGNAL_QUERIES.items())
+
+        def _fetch_one(item):
+            signal_name, (query_template, keywords) = item
             query = query_template.replace("{company}", company_name)
-            articles = _fetch_rss(query)
+            articles = _fetch_news(query)
             exclude_alumni = signal_name == "leadership_change"
             matched = _filter_articles(company_name, articles, keywords, exclude_alumni=exclude_alumni)
             found = bool(matched)
-            results.append(NewsSignal(
+            return signal_name, NewsSignal(
                 signal_name=signal_name,
                 found=found,
                 detail=f"{len(matched)} relevant article(s) found" if found else "No confirmed news found",
                 articles=matched[:5],
-            ))
-        return results
+            )
+
+        # Fetch all 8 signals in parallel — reduces wall time from ~80s worst case to ~6s
+        results_map: dict[str, NewsSignal] = {}
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            futures = {pool.submit(_fetch_one, item): item for item in signals}
+            for future in as_completed(futures):
+                try:
+                    signal_name, result = future.result()
+                    results_map[signal_name] = result
+                except Exception:
+                    pass
+
+        # Return in original order
+        return [results_map[name] for name, _ in signals if name in results_map]
