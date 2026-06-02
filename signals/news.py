@@ -4,6 +4,7 @@ import os
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
+from datetime import date, timedelta
 from urllib.parse import quote
 
 import requests
@@ -91,23 +92,28 @@ def _fetch_serpapi(query: str, max_results: int = 15) -> list[dict]:
     if not api_key:
         return []
     try:
+        # Append after: operator so Google itself filters to the past year at source
+        cutoff = (date.today() - timedelta(days=365)).strftime("%Y-%m-%d")
+        dated_query = f"{query} after:{cutoff}"
         resp = requests.get(
             "https://serpapi.com/search",
-            params={"engine": "google_news", "q": query, "api_key": api_key,
-                    "num": max_results, "tbs": "qdr:y"},  # past 12 months only
+            params={"engine": "google_news", "q": dated_query, "api_key": api_key, "num": max_results},
             timeout=10,
         )
         resp.raise_for_status()
         items = resp.json().get("news_results", [])[:max_results]
-        return [
-            {
+        results = []
+        for item in items:
+            pub_date = item.get("date", "")
+            if not is_recent(pub_date, max_days=365):
+                continue
+            results.append({
                 "title": item.get("title", ""),
                 "link": item.get("link", ""),
-                "pubDate": item.get("date", ""),
+                "pubDate": pub_date,
                 "source": item.get("source", {}).get("name", "") if isinstance(item.get("source"), dict) else str(item.get("source", "")),
-            }
-            for item in items
-        ]
+            })
+        return results
     except Exception:
         return []
 
