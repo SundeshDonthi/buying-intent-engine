@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://unpkg.com/docx@9.0.3/build/index.js"></script>
 <style>
 :root{
   --blue:#264CD7;--blue-d:#1C3AA8;--blue-l:#5C7BF0;--blue-soft:#EEF2FF;
@@ -97,6 +98,15 @@ header::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:580px){.row2{grid-template-columns:1fr}}
 label.fld{display:block;font-weight:600;font-size:12.5px;color:var(--ink2);margin-bottom:8px}
+.fld-required{color:var(--red);font-size:13px;margin-left:2px}
+.fld-err{display:none;font-size:12px;color:var(--red);margin-top:6px;font-weight:500}
+.fld-err.show{display:block}
+.acct.invalid{border-color:var(--red)!important;box-shadow:0 0 0 3px rgba(192,57,43,.12)!important}
+/* not-found error card */
+.notfound-card{padding:40px 28px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
+.notfound-icon{font-size:40px;line-height:1}
+.notfound-title{font-family:var(--serif);font-size:20px;font-weight:500;color:var(--ink)}
+.notfound-sub{font-size:14px;color:var(--ink3);max-width:380px;line-height:1.6}
 input.acct{width:100%;font-family:var(--sans);font-size:15px;color:var(--ink);padding:13px 15px;border:1.5px solid var(--line2);border-radius:13px;background:var(--white);outline:none;transition:border-color .2s,box-shadow .25s}
 input.acct::placeholder{color:var(--ink3)}
 input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
@@ -392,7 +402,11 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
   <div class="card pad scancard" id="scanCard">
     <div class="row2">
       <div><label class="fld">Company name</label><input class="acct" id="inp-company" placeholder="e.g. Williams-Sonoma" autocomplete="off"></div>
-      <div><label class="fld">Website (optional)</label><input class="acct" id="inp-domain" placeholder="e.g. https://www.williams-sonoma.com" autocomplete="off"></div>
+      <div>
+        <label class="fld">Website <span class="fld-required">*</span></label>
+        <input class="acct" id="inp-domain" placeholder="e.g. https://www.williams-sonoma.com" autocomplete="off">
+        <div class="fld-err" id="domain-err">Please enter the company website to verify the company.</div>
+      </div>
     </div>
     <div class="toolbar">
       <button class="btn primary" id="btn-analyze" onclick="startAnalysis()">
@@ -442,7 +456,15 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
         <span class="dl-l">Export</span>
         <button class="dlbtn" id="dlPdf" onclick="exportPDF()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-          Download PDF
+          PDF
+        </button>
+        <button class="dlbtn" id="dlDocx" onclick="exportWord()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Word
+        </button>
+        <button class="dlbtn" id="dlShot" onclick="exportScreenshot()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          Screenshot
         </button>
       </div>
     </div>
@@ -740,7 +762,19 @@ function startAnalysis() {
   // Normalize to title case so "nike" → "Nike" in the UI immediately
   const company = rawCompany.replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
   document.getElementById('inp-company').value = company;
-  const domain = document.getElementById('inp-domain').value.trim();
+
+  const domainInput = document.getElementById('inp-domain');
+  const domain = domainInput.value.trim();
+  const domainErr = document.getElementById('domain-err');
+  // Domain is required
+  if (!domain) {
+    domainInput.classList.add('invalid');
+    domainErr.classList.add('show');
+    domainInput.focus();
+    return;
+  }
+  domainInput.classList.remove('invalid');
+  domainErr.classList.remove('show');
 
   setStatus('working', 'Scanning…');
   document.getElementById('btn-analyze').disabled = true;
@@ -809,6 +843,20 @@ function startAnalysis() {
     renderResult(JSON.parse(e.data));
   });
 
+  es.addEventListener('error_event', e => {
+    es.close();
+    const err = JSON.parse(e.data);
+    document.getElementById('miniSpin').style.display = 'none';
+    document.getElementById('progressArea').classList.add('hide');
+    setStatus('ready', 'Ready');
+    document.getElementById('btn-analyze').disabled = false;
+    if (err.code === 'company_not_found') {
+      renderNotFound(err.company, err.domain);
+    } else {
+      showToast('Error: ' + (err.message || 'Unknown error'));
+    }
+  });
+
   es.onerror = () => {
     es.close();
     document.getElementById('prog-title-text').textContent = 'Connection error — please retry';
@@ -816,6 +864,22 @@ function startAnalysis() {
     setStatus('ready', 'Ready');
     document.getElementById('btn-analyze').disabled = false;
   };
+}
+
+// ── Not found ─────────────────────────────────────────────────────────────
+function renderNotFound(company, domain) {
+  const card = document.getElementById('resultCard');
+  card.innerHTML = `
+    <div class="notfound-card">
+      <div class="notfound-icon">🔍</div>
+      <div class="notfound-title">Company Not Found</div>
+      <div class="notfound-sub">
+        We couldn't verify <strong>${esc(company)}</strong> at <strong>${esc(cleanDomain(domain))}</strong>.<br>
+        The company name may be misspelled, or the website doesn't match. Please check both and try again.
+      </div>
+      <button class="btn-pill" style="margin-top:8px" onclick="resetUI()">← Try again</button>
+    </div>`;
+  document.getElementById('resultArea').classList.remove('hide');
 }
 
 // ── Render result ──────────────────────────────────────────────────────────
@@ -897,6 +961,7 @@ async function fetchCompanyInfo(company, domain) {
     if (!r.ok) return;
     const info = await r.json();
     if (info && (info.name || info.description)) {
+      window._lastCoInfo = info;
       renderCoInfoStrip(company, domain, info);
     }
   } catch(e) { /* silent */ }
@@ -1192,13 +1257,213 @@ async function exportPDF() {
 
   doc.save(`${d.company.replace(/[^a-z0-9]/gi,'_')}_intent_report.pdf`);
   btn.disabled = false;
-  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg> Download PDF`;
+  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg> PDF`;
   showToast('PDF downloaded ✓');
   } catch(err) {
     btn.disabled = false;
-    btn.textContent = 'Download PDF';
+    btn.textContent = 'PDF';
     showToast('PDF failed: ' + err.message);
     console.error('PDF error:', err);
+  }
+}
+
+// ── Word Export ────────────────────────────────────────────────────────────
+async function exportWord() {
+  if (!lastResult) return;
+  const btn = document.getElementById('dlDocx');
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  showToast('Generating Word doc…');
+  try {
+    if (!window.docx) throw new Error('docx library not loaded');
+    const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+            AlignmentType, BorderStyle, WidthType, ShadingType, HeadingLevel,
+            LevelFormat } = window.docx;
+
+    const d = lastResult;
+    const coInfo = window._lastCoInfo || {};
+    const date = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+
+    const border = { style: BorderStyle.SINGLE, size: 1, color: 'E0E0E8' };
+    const borders = { top: border, bottom: border, left: border, right: border };
+    const noBorder = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
+    const noBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
+
+    function p(text, opts = {}) {
+      return new Paragraph({
+        spacing: { after: opts.after ?? 120 },
+        alignment: opts.align || AlignmentType.LEFT,
+        children: [new TextRun({
+          text,
+          bold: opts.bold || false,
+          size: opts.size || 22,
+          color: opts.color || '1C1B1B',
+          font: 'Arial',
+          italics: opts.italic || false,
+        })]
+      });
+    }
+
+    function infoRow(label, value) {
+      return new TableRow({ children: [
+        new TableCell({ borders, width: { size: 2200, type: WidthType.DXA },
+          shading: { fill: 'F4F4F6', type: ShadingType.CLEAR },
+          margins: { top: 80, bottom: 80, left: 120, right: 120 },
+          children: [new Paragraph({ children: [new TextRun({ text: label, bold: true, size: 20, color: '6B6B72', font: 'Arial' })] })] }),
+        new TableCell({ borders, width: { size: 7160, type: WidthType.DXA },
+          margins: { top: 80, bottom: 80, left: 120, right: 120 },
+          children: [new Paragraph({ children: [new TextRun({ text: value || '—', size: 20, font: 'Arial', color: '1C1B1B' })] })] }),
+      ]});
+    }
+
+    function signalRow(s) {
+      const icon = s.found ? (s.type === 'positive' ? '+' : s.type === 'negative' ? 'x' : '~') : '-';
+      const contrib = s.found && s.score_contribution !== 0
+        ? (s.score_contribution > 0 ? `+${s.score_contribution}` : `${s.score_contribution}`) : '';
+      const rowFill = !s.found ? 'FFFFFF' : s.type === 'negative' ? 'FBEBE9' : s.type === 'neutral' ? 'FFFBF0' : 'E7F6EE';
+      const nameColor = s.found ? '1C1B1B' : '9A9A94';
+      const contribColor = s.score_contribution > 0 ? '1B7A4B' : s.score_contribution < 0 ? 'C0392B' : '9A9A94';
+      return new TableRow({ children: [
+        new TableCell({ borders, width: { size: 500, type: WidthType.DXA },
+          shading: { fill: rowFill, type: ShadingType.CLEAR },
+          margins: { top: 60, bottom: 60, left: 100, right: 60 },
+          children: [new Paragraph({ children: [new TextRun({ text: icon, bold: true, size: 20, font: 'Arial', color: nameColor })] })] }),
+        new TableCell({ borders, width: { size: 5200, type: WidthType.DXA },
+          shading: { fill: rowFill, type: ShadingType.CLEAR },
+          margins: { top: 60, bottom: 60, left: 80, right: 80 },
+          children: [
+            new Paragraph({ children: [new TextRun({ text: fmtName(s.name), bold: s.found, size: 20, font: 'Arial', color: nameColor })] }),
+            new Paragraph({ spacing: { after: 0 }, children: [new TextRun({ text: s.detail.substring(0, 90) + (s.detail.length > 90 ? '...' : ''), size: 17, font: 'Arial', color: '9A9A94', italics: true })] }),
+          ] }),
+        new TableCell({ borders, width: { size: 1100, type: WidthType.DXA },
+          shading: { fill: rowFill, type: ShadingType.CLEAR },
+          margins: { top: 60, bottom: 60, left: 60, right: 100 },
+          children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: contrib, bold: true, size: 20, font: 'Arial', color: contribColor })] })] }),
+      ]});
+    }
+
+    // Collect insight text if available
+    const insightEl = document.getElementById('insightBlock');
+    const summaryText = insightEl ? (insightEl.querySelectorAll('.insight-text')[0]?.textContent || '') : '';
+    const bdText = insightEl ? (insightEl.querySelectorAll('.insight-text')[1]?.textContent || '') : '';
+
+    const children = [
+      // Title header
+      new Paragraph({ spacing: { after: 60 }, children: [
+        new TextRun({ text: 'IMPACT ANALYTICS', bold: true, size: 20, color: '264CD7', font: 'Arial', allCaps: true }),
+        new TextRun({ text: '   |   Buying Intent Report', size: 20, color: '9A9A94', font: 'Arial' }),
+      ]}),
+      new Paragraph({ spacing: { after: 40 }, children: [
+        new TextRun({ text: `Generated ${date}`, size: 18, color: 'AAAAAA', font: 'Arial', italics: true }),
+      ]}),
+      new Paragraph({ border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: '264CD7', space: 1 } }, spacing: { after: 240 }, children: [] }),
+
+      // Company name + domain
+      new Paragraph({ spacing: { after: 60 }, children: [
+        new TextRun({ text: d.company, bold: true, size: 48, color: '1C1B1B', font: 'Arial' }),
+      ]}),
+      new Paragraph({ spacing: { after: 240 }, children: [
+        new TextRun({ text: cleanDomain(d.domain), size: 20, color: '264CD7', font: 'Arial' }),
+      ]}),
+
+      // Company info table
+      new Table({
+        width: { size: 9360, type: WidthType.DXA },
+        columnWidths: [2200, 7160],
+        rows: [
+          infoRow('Industry',      coInfo.industry),
+          infoRow('Revenue',       coInfo.revenue),
+          infoRow('Headquarters',  coInfo.hq),
+          infoRow('Website',       cleanDomain(d.domain)),
+        ],
+      }),
+      new Paragraph({ spacing: { after: 300 }, children: [] }),
+
+      // Score section
+      p('INTENT SCORE', { bold: true, size: 18, color: '6B6B72', after: 80 }),
+      new Paragraph({ spacing: { after: 60 }, children: [
+        new TextRun({ text: (d.total_score > 0 ? '+' : '') + d.total_score, bold: true, size: 72, font: 'Arial',
+          color: d.total_score > 0 ? '1B7A4B' : d.total_score < 0 ? 'C0392B' : '9A9A94' }),
+        new TextRun({ text: `   ${d.intent_level}`, bold: true, size: 28, font: 'Arial', color: '264CD7' }),
+      ]}),
+      new Paragraph({ spacing: { after: 60 }, children: [
+        new TextRun({ text: `+${d.positive_score} positive   `, size: 20, font: 'Arial', color: '1B7A4B', bold: true }),
+        new TextRun({ text: `${d.negative_score} negative   `, size: 20, font: 'Arial', color: 'C0392B', bold: true }),
+        new TextRun({ text: `${d.neutral_score} noted`, size: 20, font: 'Arial', color: '9A9A94' }),
+      ]}),
+      new Paragraph({ spacing: { after: 300 }, children: [] }),
+
+      // Summary
+      ...(summaryText ? [
+        p('SUMMARY', { bold: true, size: 18, color: '6B6B72', after: 80 }),
+        p(summaryText, { size: 21, after: 200 }),
+      ] : []),
+
+      // BD recommendation
+      ...(bdText ? [
+        p('HOW TO REACH OUT', { bold: true, size: 18, color: '6B6B72', after: 80 }),
+        p(bdText, { size: 21, after: 300 }),
+      ] : []),
+
+      // Signals
+      p('SIGNAL BREAKDOWN', { bold: true, size: 18, color: '6B6B72', after: 100 }),
+      new Table({
+        width: { size: 9360, type: WidthType.DXA },
+        columnWidths: [500, 5200, 1100],
+        rows: d.signals.filter(s => s.weight > 0).map(signalRow),
+      }),
+
+      // Footer
+      new Paragraph({ spacing: { before: 400, after: 0 },
+        border: { top: { style: BorderStyle.SINGLE, size: 4, color: 'E0E0E8', space: 1 } },
+        children: [new TextRun({ text: 'Impact Analytics  |  Buying Intent Engine  |  Data sourced from public records only', size: 17, color: 'AAAAAA', font: 'Arial', italics: true })] }),
+    ];
+
+    const doc = new Document({
+      sections: [{
+        properties: {
+          page: { size: { width: 12240, height: 15840 }, margin: { top: 1080, right: 1080, bottom: 1080, left: 1080 } }
+        },
+        children,
+      }]
+    });
+
+    const buffer = await Packer.toBuffer(doc);
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${d.company.replace(/[^a-z0-9]/gi,'_')}_intent_report.docx`;
+    a.click(); URL.revokeObjectURL(url);
+
+    btn.disabled = false;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Word`;
+    showToast('Word doc downloaded ✓');
+  } catch(err) {
+    btn.disabled = false; btn.textContent = 'Word';
+    showToast('Word export failed: ' + err.message);
+    console.error('Word error:', err);
+  }
+}
+
+// ── Screenshot Export ──────────────────────────────────────────────────────
+async function exportScreenshot() {
+  if (!lastResult) return;
+  const btn = document.getElementById('dlShot');
+  btn.disabled = true; btn.textContent = 'Capturing…';
+  showToast('Capturing screenshot…');
+  try {
+    const card = document.getElementById('resultCard');
+    const canvas = await html2canvas(card, { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false });
+    const url = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url; a.download = `${lastResult.company.replace(/[^a-z0-9]/gi,'_')}_intent_report.png`;
+    a.click();
+    btn.disabled = false;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Screenshot`;
+    showToast('Screenshot saved ✓');
+  } catch(err) {
+    btn.disabled = false; btn.textContent = 'Screenshot';
+    showToast('Screenshot failed: ' + err.message);
   }
 }
 
@@ -1209,7 +1474,7 @@ function resetUI() {
   document.getElementById('inp-company').value = '';
   document.getElementById('inp-domain').value = '';
   document.getElementById('inp-company').focus();
-  allSignals = []; lastResult = null; currentFilter = 'all';
+  allSignals = []; lastResult = null; currentFilter = 'all'; window._lastCoInfo = {};
   document.querySelectorAll('.filters button').forEach((b,i) => b.classList.toggle('on', i===0));
 }
 

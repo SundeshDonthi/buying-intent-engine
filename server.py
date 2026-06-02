@@ -63,9 +63,50 @@ COLLECTOR_SIGNALS: dict[str, set[str]] = {
 }
 
 
+def _validate_company(company: str, domain: str) -> bool:
+    """Return True if the company name can be verified against its homepage."""
+    try:
+        resp = requests.get(
+            domain, timeout=6,
+            headers={"User-Agent": "Mozilla/5.0 (compatible; BuyingIntentBot/1.0)"},
+            allow_redirects=True,
+        )
+        if resp.status_code >= 400:
+            return False
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(resp.text[:80_000], "lxml")
+        # Check title + meta description + og:title + og:site_name
+        candidates = []
+        if soup.title and soup.title.string:
+            candidates.append(soup.title.string)
+        for attr in ("description", "og:title", "og:site_name", "application-name"):
+            tag = soup.find("meta", attrs={"property": attr}) or soup.find("meta", attrs={"name": attr})
+            if tag and tag.get("content"):
+                candidates.append(tag["content"])
+        text = " ".join(candidates).lower()
+
+        # Build match tokens from company name (strip common suffixes)
+        name_clean = re.sub(r"\b(inc|corp|llc|ltd|co|plc|group|holdings|international|technologies|technology|solutions)\b\.?", "", company, flags=re.IGNORECASE).strip()
+        tokens = [t for t in re.split(r"\W+", name_clean) if len(t) > 2]
+        if not tokens:
+            tokens = [re.split(r"\W+", company)[0]]
+
+        # At least one meaningful token must appear in the page metadata
+        return any(tok.lower() in text for tok in tokens)
+    except Exception:
+        # Can't reach the site — let it through rather than block on network issues
+        return True
+
+
 async def _stream_analysis(company: str, domain: str, selected_signals: set[str] | None = None) -> AsyncGenerator[str, None]:
     def send(event: str, data: dict) -> str:
         return f"event: {event}\ndata: {json.dumps(data)}\n\n"
+
+    # ── Validate company against domain before running any collectors ──────
+    valid = await asyncio.to_thread(_validate_company, company, domain)
+    if not valid:
+        yield send("error_event", {"code": "company_not_found", "company": company, "domain": domain})
+        return
 
     # Filter collectors to only those needed for the selected signals
     active_collectors = [
