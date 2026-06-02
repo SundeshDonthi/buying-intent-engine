@@ -451,6 +451,7 @@ async def submit_report(body: ReportRequest):
     return JSONResponse({"success": True})
 
 
+@app.get("/account-signal-scanner/admin/reports")
 @app.get("/admin/reports")
 async def view_reports(key: str = ""):
     admin_key = os.environ.get("ADMIN_KEY", "")
@@ -478,6 +479,7 @@ async def view_reports(key: str = ""):
     return HTMLResponse(html)
 
 
+@app.get("/account-signal-scanner/admin/searches")
 @app.get("/admin/searches")
 async def view_searches(key: str = ""):
     admin_key = os.environ.get("ADMIN_KEY", "")
