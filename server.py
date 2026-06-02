@@ -3,8 +3,7 @@
 import asyncio
 import json
 import os
-import smtplib
-from email.mime.text import MIMEText
+from datetime import datetime
 from pathlib import Path
 from typing import AsyncGenerator
 
@@ -392,47 +391,67 @@ class ReportRequest(BaseModel):
     email: str = ""
 
 
+REPORTS_FILE = Path(__file__).parent / "reports.json"
+
+
+def _load_reports() -> list:
+    if REPORTS_FILE.exists():
+        try:
+            return json.loads(REPORTS_FILE.read_text())
+        except Exception:
+            return []
+    return []
+
+
+def _save_report(entry: dict):
+    reports = _load_reports()
+    reports.append(entry)
+    REPORTS_FILE.write_text(json.dumps(reports, indent=2))
+
+
 @app.post("/report")
 async def submit_report(body: ReportRequest):
-    def _send():
-        smtp_user = os.environ.get("REPORT_EMAIL", "")
-        smtp_pass = os.environ.get("REPORT_EMAIL_PASSWORD", "")
-        to_addr   = os.environ.get("REPORT_TO_EMAIL", smtp_user)
+    entry = {
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "company": body.company,
+        "domain": body.domain,
+        "intent_level": body.intent_level,
+        "total_score": body.total_score,
+        "issues": body.issues_selected,
+        "details": body.message,
+        "reporter_email": body.email or None,
+    }
+    await asyncio.to_thread(_save_report, entry)
+    # Also print to stdout so it's visible in Railway logs
+    print(f"[REPORT] {entry}")
+    return JSONResponse({"success": True})
 
-        if not smtp_user or not smtp_pass:
-            # Fallback: just log to stdout (visible in Railway logs)
-            print(f"[REPORT] Company={body.company} | Issues={body.issues_selected} "
-                  f"| Score={body.total_score} | From={body.email} | Note={body.message}")
-            return {"success": True}
 
-        subject = f"Inaccuracy Report — {body.company or 'Unknown'}"
-        body_text = (
-            f"Company:       {body.company}\n"
-            f"Domain:        {body.domain}\n"
-            f"Intent Level:  {body.intent_level}\n"
-            f"Score:         {body.total_score}\n"
-            f"Issues:        {body.issues_selected}\n"
-            f"Reporter:      {body.email or '(anonymous)'}\n\n"
-            f"Details:\n{body.message or '(none)'}"
-        )
-
-        msg = MIMEText(body_text)
-        msg["Subject"] = subject
-        msg["From"]    = smtp_user
-        msg["To"]      = to_addr
-        if body.email:
-            msg["Reply-To"] = body.email
-
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as server:
-            server.login(smtp_user, smtp_pass)
-            server.sendmail(smtp_user, [to_addr], msg.as_string())
-        return {"success": True}
-
-    try:
-        result = await asyncio.to_thread(_send)
-        return JSONResponse(result)
-    except Exception as e:
-        return JSONResponse({"success": False, "message": str(e)}, status_code=500)
+@app.get("/admin/reports")
+async def view_reports(key: str = ""):
+    admin_key = os.environ.get("ADMIN_KEY", "")
+    if admin_key and key != admin_key:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    reports = _load_reports()
+    rows = "".join(
+        f"""<tr>
+          <td>{r.get('timestamp','')[:19].replace('T',' ')}</td>
+          <td><strong>{r.get('company','')}</strong></td>
+          <td>{r.get('intent_level','')} ({r.get('total_score','')})</td>
+          <td>{r.get('issues','')}</td>
+          <td>{r.get('details','')}</td>
+          <td>{r.get('reporter_email','') or '—'}</td>
+        </tr>"""
+        for r in reversed(reports)
+    )
+    html = f"""<!doctype html><html><head><title>Reports</title>
+    <style>body{{font-family:sans-serif;padding:24px;font-size:13px}}
+    table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #ddd;padding:8px 10px;text-align:left;vertical-align:top}}
+    th{{background:#f4f4f6;font-weight:700}}tr:nth-child(even){{background:#fafafa}}</style></head>
+    <body><h2>Inaccuracy Reports ({len(reports)} total)</h2>
+    <table><thead><tr><th>Time (UTC)</th><th>Company</th><th>Intent / Score</th><th>Issues</th><th>Details</th><th>Reporter</th></tr></thead>
+    <tbody>{rows}</tbody></table></body></html>"""
+    return HTMLResponse(html)
 
 
 @app.get("/", response_class=HTMLResponse)

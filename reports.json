@@ -1,0 +1,12 @@
+[
+  {
+    "timestamp": "2026-06-02T16:20:19.641763Z",
+    "company": "Nike",
+    "domain": "https://www.nike.com",
+    "intent_level": "Potential Buyer",
+    "total_score": "25",
+    "issues": "Incorrect signals or scores",
+    "details": "Revenue looks wrong",
+    "reporter_email": "test@example.com"
+  }
+]
