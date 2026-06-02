@@ -235,7 +235,7 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
 .filters button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 
 /* ── signal rows ── */
-.signals-body{background:var(--white);border-radius:0 0 var(--r) var(--r);overflow:hidden}
+.signals-body{background:var(--white);border-radius:0 0 var(--r) var(--r);overflow:hidden;min-height:40px}
 .srow{position:relative;display:flex;align-items:flex-start;gap:14px;padding:15px 20px 15px 22px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .18s}
 .srow:last-child{border-bottom:none}
 .srow::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:transparent;transition:background .3s}
@@ -271,7 +271,7 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
 .ev-text a:hover{text-decoration:underline}
 
 /* ── export bar ── */
-.dlbar{display:flex;align-items:center;flex-wrap:wrap;gap:9px;padding:16px 28px;border-top:1px dashed var(--line2);background:var(--white);border-radius:0 0 var(--r) var(--r)}
+.dlbar{display:flex;align-items:center;flex-wrap:wrap;gap:9px;padding:14px 28px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--bg2)}
 .dl-l{font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--ink3);margin-right:4px}
 .dlbtn{display:inline-flex;align-items:center;gap:7px;font-family:var(--sans);font-weight:600;font-size:13px;color:var(--ink);background:var(--white);border:1px solid var(--line2);padding:8px 14px;border-radius:999px;cursor:pointer;transition:border-color .18s,background .18s,transform .18s var(--spring)}
 .dlbtn svg{width:15px;height:15px;color:var(--blue)}
@@ -281,6 +281,36 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
 /* ── new search button ── */
 .btn-new{margin-top:20px;background:none;border:1.5px solid var(--line2);color:var(--ink2);border-radius:10px;padding:10px 20px;font-size:13.5px;cursor:pointer;transition:all .15s;font-family:var(--sans);font-weight:600}
 .btn-new:hover{border-color:var(--blue);color:var(--blue)}
+/* ── report bar ── */
+.report-bar{margin-top:12px;display:flex;align-items:center;gap:8px;padding:0 4px}
+.report-prompt{font-size:12.5px;color:var(--ink3)}
+.report-btn{display:inline-flex;align-items:center;gap:5px;background:none;border:none;padding:0;font-size:12.5px;font-weight:600;color:var(--red);cursor:pointer;font-family:var(--sans);transition:opacity .15s}
+.report-btn:hover{opacity:.72}
+/* ── report modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:900;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex;animation:fadein .18s ease both}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.modal-box{background:#fff;border-radius:16px;padding:32px 28px 24px;width:100%;max-width:480px;position:relative;box-shadow:0 24px 60px rgba(0,0,0,.18);animation:fadeup .22s var(--ease) both}
+.modal-close{position:absolute;top:16px;right:18px;background:none;border:none;font-size:18px;color:var(--ink3);cursor:pointer;line-height:1;padding:4px 6px;border-radius:6px}
+.modal-close:hover{background:var(--bg2);color:var(--ink)}
+.modal-title{font-family:var(--serif);font-size:20px;font-weight:500;color:var(--ink);margin-bottom:6px}
+.modal-sub{font-size:13.5px;color:var(--ink3);margin-bottom:22px}
+.modal-section-label{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:10px}
+.modal-hint{font-weight:400;color:var(--ink3)}
+.modal-checks{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+.modal-check{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--ink);cursor:pointer}
+.modal-check input[type=checkbox]{width:17px;height:17px;border-radius:4px;accent-color:var(--blue);flex:none;cursor:pointer}
+.modal-textarea{width:100%;border:1px solid var(--line2);border-radius:8px;padding:11px 13px;font-size:13px;font-family:var(--sans);color:var(--ink);resize:vertical;outline:none;box-sizing:border-box;line-height:1.55;margin-bottom:18px}
+.modal-textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(38,76,215,.1)}
+.modal-input{width:100%;border:1px solid var(--line2);border-radius:8px;padding:11px 13px;font-size:13px;font-family:var(--sans);color:var(--ink);outline:none;box-sizing:border-box;margin-bottom:22px}
+.modal-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(38,76,215,.1)}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px}
+.modal-cancel{background:#fff;border:1.5px solid var(--line2);border-radius:10px;padding:11px 22px;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer;font-family:var(--sans);transition:border-color .15s}
+.modal-cancel:hover{border-color:var(--ink2)}
+.modal-submit{background:var(--blue);color:#fff;border:none;border-radius:10px;padding:11px 22px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:background .15s}
+.modal-submit:hover{background:var(--blue-d)}
+.modal-submit:disabled{opacity:.55;cursor:wait}
+.modal-footnote{font-size:12px;color:var(--ink3);text-align:center;margin-top:14px}
 
 /* ── toast ── */
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(14px);background:var(--ink);color:#fff;font-size:13.5px;font-weight:500;padding:12px 20px;border-radius:999px;box-shadow:var(--sh-lg);z-index:999;opacity:0;transition:opacity .25s,transform .3s var(--spring);pointer-events:none}
@@ -441,16 +471,6 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
       <div class="summary" id="scoreSummary"></div>
       <!-- insights -->
       <div class="insight-block" id="insightBlock" style="display:none"></div>
-      <!-- filters -->
-      <div class="filters" id="sigFilters">
-        <button class="on" onclick="filterSigs('all',this)">All</button>
-        <button onclick="filterSigs('positive',this)">Positive</button>
-        <button onclick="filterSigs('negative',this)">Negative</button>
-        <button onclick="filterSigs('neutral',this)">Neutral</button>
-        <button onclick="filterSigs('found',this)">Detected only</button>
-      </div>
-      <!-- signals -->
-      <div class="signals-body" id="sigBody"></div>
       <!-- export bar -->
       <div class="dlbar">
         <span class="dl-l">Export</span>
@@ -467,10 +487,58 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
           Screenshot
         </button>
       </div>
+      <!-- filters -->
+      <div class="filters" id="sigFilters">
+        <button class="on" onclick="filterSigs('all',this)">All</button>
+        <button onclick="filterSigs('positive',this)">Positive</button>
+        <button onclick="filterSigs('negative',this)">Negative</button>
+        <button onclick="filterSigs('neutral',this)">Neutral</button>
+        <button onclick="filterSigs('found',this)">Detected only</button>
+      </div>
+      <!-- signals -->
+      <div class="signals-body" id="sigBody"></div>
+    </div>
+    <div class="report-bar">
+      <span class="report-prompt">Results look off?</span>
+      <button class="report-btn" onclick="openReport()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        Report an inaccuracy
+      </button>
     </div>
     <button class="btn-new" onclick="resetUI()">← New search</button>
   </div>
 </div>
+
+<!-- Report modal -->
+<div class="modal-overlay" id="reportOverlay" onclick="if(event.target===this)closeReport()">
+  <div class="modal-box" id="reportModal">
+    <button class="modal-close" onclick="closeReport()">✕</button>
+    <div class="modal-title">Report an inaccurate result</div>
+    <div class="modal-sub">Reporting the result for <strong id="reportCompanyName"></strong>.</div>
+
+    <div class="modal-section-label">What looks wrong? <span class="modal-hint">(select any)</span></div>
+    <div class="modal-checks">
+      <label class="modal-check"><input type="checkbox" value="Wrong company identified"> Wrong company identified</label>
+      <label class="modal-check"><input type="checkbox" value="Incorrect signals or scores"> Incorrect signals or scores</label>
+      <label class="modal-check"><input type="checkbox" value="Wrong account intelligence (stack / scale / pressure)"> Wrong account intelligence (stack / scale / pressure)</label>
+      <label class="modal-check"><input type="checkbox" value="Wrong outreach recommendation"> Wrong outreach recommendation</label>
+      <label class="modal-check"><input type="checkbox" value="Other"> Other</label>
+    </div>
+
+    <div class="modal-section-label">Details <span class="modal-hint">(optional)</span></div>
+    <textarea class="modal-textarea" id="reportNote" placeholder="What should it have shown? Anything that was off." rows="4"></textarea>
+
+    <div class="modal-section-label">Your email <span class="modal-hint">(optional, for follow-up)</span></div>
+    <input class="modal-input" id="reportEmail" type="email" placeholder="you@company.com">
+
+    <div class="modal-footer">
+      <button class="modal-cancel" onclick="closeReport()">Cancel</button>
+      <button class="modal-submit" id="reportSubmit" onclick="submitReport()">Submit report</button>
+    </div>
+    <div class="modal-footnote">Your report is sent straight to the team.</div>
+  </div>
+</div>
+
 <!-- Signals tab -->
 <div class="wrap hide" id="signals-pane">
   <div class="sigs-wrap">
@@ -930,8 +998,8 @@ function renderResult(d) {
   document.getElementById('resultArea').classList.remove('hide');
 
   // Show company info strip with loading state, then fetch
-  renderCoInfoStrip(d.company, d.domain, null);
-  fetchCompanyInfo(d.company, d.domain);
+  renderCoInfoStrip(d.company, d.domain, null); // null = show loading spinners
+  fetchCompanyInfo(d.company, d.domain);        // resolves and re-renders with real data
 
   // Render insights
   renderInsights(d);
@@ -941,12 +1009,13 @@ function renderCoInfoStrip(company, domain, info) {
   const strip = document.getElementById('coInfoStrip');
   const website = cleanDomain(domain);
   const loading = '<span class="loading">Loading…</span>';
+  const pending = info === null; // null = still loading, {} or object = resolved
   const fields = [
-    { label: 'Company',    val: info ? esc(info.name || company) : esc(company) },
-    { label: 'Industry',   val: info ? (info.industry ? esc(info.industry) : '—') : loading },
-    { label: 'Revenue',    val: info ? (info.revenue  ? esc(info.revenue)  : '—') : loading },
-    { label: 'Headquarters', val: info ? (info.hq     ? esc(info.hq)       : '—') : loading },
-    { label: 'Website',    val: `<a href="${esc(domain)}" target="_blank">${esc(website)}</a>` },
+    { label: 'Company',      val: esc((info && info.name) || company) },
+    { label: 'Industry',     val: pending ? loading : esc((info && info.industry) || '—') },
+    { label: 'Revenue',      val: pending ? loading : esc((info && info.revenue)  || '—') },
+    { label: 'Headquarters', val: pending ? loading : esc((info && info.hq)       || '—') },
+    { label: 'Website',      val: `<a href="${esc(domain)}" target="_blank">${esc(website)}</a>` },
   ];
   strip.innerHTML = fields.map(f => `
     <div class="co-info-item">
@@ -957,14 +1026,18 @@ function renderCoInfoStrip(company, domain, info) {
 
 async function fetchCompanyInfo(company, domain) {
   try {
-    const r = await fetch(`/company-info?company=${encodeURIComponent(company)}`);
-    if (!r.ok) return;
-    const info = await r.json();
-    if (info && (info.name || info.description)) {
-      window._lastCoInfo = info;
-      renderCoInfoStrip(company, domain, info);
+    const r = await fetch(`/company-info?company=${encodeURIComponent(company)}&domain=${encodeURIComponent(domain)}`);
+    if (!r.ok) {
+      renderCoInfoStrip(company, domain, {});
+      return;
     }
-  } catch(e) { /* silent */ }
+    const info = await r.json();
+    window._lastCoInfo = info || {};
+    renderCoInfoStrip(company, domain, info || {});
+  } catch(e) {
+    console.error('company-info fetch failed:', e);
+    renderCoInfoStrip(company, domain, {});
+  }
 }
 
 function renderInsights(d) {
@@ -1467,6 +1540,67 @@ async function exportScreenshot() {
   }
 }
 
+// ── Report inaccuracy ─────────────────────────────────────────────────────
+function openReport() {
+  document.getElementById('reportCompanyName').textContent =
+    lastResult ? lastResult.company : 'this company';
+  // Reset form state
+  document.querySelectorAll('#reportModal input[type=checkbox]').forEach(c => c.checked = false);
+  document.getElementById('reportNote').value = '';
+  document.getElementById('reportEmail').value = '';
+  const btn = document.getElementById('reportSubmit');
+  btn.disabled = false; btn.textContent = 'Submit report';
+  document.getElementById('reportOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeReport() {
+  document.getElementById('reportOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+async function submitReport() {
+  const checks = [...document.querySelectorAll('#reportModal input[type=checkbox]:checked')]
+    .map(c => c.value);
+  const note  = document.getElementById('reportNote').value.trim();
+  const email = document.getElementById('reportEmail').value.trim();
+  const btn   = document.getElementById('reportSubmit');
+  btn.disabled = true; btn.textContent = 'Sending…';
+  try {
+    const issues = checks.length ? checks.join(', ') : 'Not specified';
+    const payload = {
+      access_key: 'e0dd563d-8296-4ed9-bf1b-129a49a6d258',
+      subject: `Inaccuracy Report — ${lastResult ? lastResult.company : 'Unknown'}`,
+      from_name: 'Buying Intent Engine',
+      email: email || 'noreply@buyingintent.app',
+      company: lastResult ? lastResult.company : '',
+      domain: lastResult ? lastResult.domain : '',
+      intent_level: lastResult ? lastResult.intent_level : '',
+      total_score: lastResult ? String(lastResult.total_score) : '',
+      issues_selected: issues,
+      message: note || '(no additional details)',
+    };
+    const r = await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const res = await r.json();
+    if (res.success) {
+      document.getElementById('reportModal').innerHTML = `
+        <div style="padding:32px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px">
+          <div style="font-size:36px">✅</div>
+          <div style="font-family:var(--serif);font-size:20px;font-weight:500">Report sent</div>
+          <div style="font-size:13.5px;color:var(--ink3)">Thank you — your feedback goes straight to the team.</div>
+          <button class="modal-cancel" onclick="closeReport()" style="margin-top:8px">Close</button>
+        </div>`;
+    } else {
+      throw new Error(res.message || 'Submission failed');
+    }
+  } catch(e) {
+    btn.disabled = false; btn.textContent = 'Submit report';
+    showToast('Could not send report: ' + e.message);
+  }
+}
+
 // ── Utilities ─────────────────────────────────────────────────────────────
 function resetUI() {
   document.getElementById('resultArea').classList.add('hide');
@@ -1475,6 +1609,7 @@ function resetUI() {
   document.getElementById('inp-domain').value = '';
   document.getElementById('inp-company').focus();
   allSignals = []; lastResult = null; currentFilter = 'all'; window._lastCoInfo = {};
+  closeReport();
   document.querySelectorAll('.filters button').forEach((b,i) => b.classList.toggle('on', i===0));
 }
 

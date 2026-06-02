@@ -18,6 +18,7 @@ if _env_path.exists():
 import re
 from urllib.parse import urlparse, urlunparse
 
+
 import requests
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -63,38 +64,83 @@ COLLECTOR_SIGNALS: dict[str, set[str]] = {
 }
 
 
+_CORP_SUFFIXES = re.compile(
+    r"\b(inc|corp|llc|ltd|co|plc|group|holdings|international|"
+    r"technologies|technology|solutions|services|enterprises|global)\b\.?",
+    re.IGNORECASE,
+)
+
+
+def _name_tokens(text: str) -> list[str]:
+    """Return meaningful lowercase alpha-numeric tokens from a company name."""
+    cleaned = _CORP_SUFFIXES.sub("", text)
+    return [t for t in re.split(r"[^a-z0-9]+", cleaned.lower()) if len(t) >= 2]
+
+
+def _domain_slug(domain: str) -> str:
+    """Extract just the registrable part of a hostname, e.g. 'salesforce' from 'www.salesforce.com'."""
+    parsed = urlparse(domain if "://" in domain else "https://" + domain)
+    host = (parsed.hostname or "").lower()
+    # strip leading "www."
+    host = re.sub(r"^www\.", "", host)
+    # strip TLD(s) — everything from the last dot onward (handles .com, .co.uk, .io, etc.)
+    host = re.sub(r"\.[^.]+$", "", host)   # strip last segment (.com)
+    host = re.sub(r"\.[^.]+$", "", host)   # strip again for .co.uk etc.
+    return re.sub(r"[^a-z0-9]", "", host)  # remove remaining punctuation (hyphens etc.)
+
+
 def _validate_company(company: str, domain: str) -> bool:
-    """Return True if the company name can be verified against its homepage."""
+    """
+    Stage 1 (instant): token-exact match between company name and domain slug.
+      e.g. tokens("Nike Inc") = ["nike"] must equal domain_slug("nike.com") = "nike"  ✓
+           tokens("Salesforc") = ["salesforc"] ≠ "salesforce"  → fail → Stage 2
+    Stage 2 (network): homepage meta tags contain every company token as a whole word.
+    """
     try:
-        resp = requests.get(
-            domain, timeout=6,
-            headers={"User-Agent": "Mozilla/5.0 (compatible; BuyingIntentBot/1.0)"},
-            allow_redirects=True,
-        )
-        if resp.status_code >= 400:
-            return False
-        from bs4 import BeautifulSoup
-        soup = BeautifulSoup(resp.text[:80_000], "lxml")
-        # Check title + meta description + og:title + og:site_name
-        candidates = []
-        if soup.title and soup.title.string:
-            candidates.append(soup.title.string)
-        for attr in ("description", "og:title", "og:site_name", "application-name"):
-            tag = soup.find("meta", attrs={"property": attr}) or soup.find("meta", attrs={"name": attr})
-            if tag and tag.get("content"):
-                candidates.append(tag["content"])
-        text = " ".join(candidates).lower()
+        tokens = _name_tokens(company)
+        slug = _domain_slug(domain)
 
-        # Build match tokens from company name (strip common suffixes)
-        name_clean = re.sub(r"\b(inc|corp|llc|ltd|co|plc|group|holdings|international|technologies|technology|solutions)\b\.?", "", company, flags=re.IGNORECASE).strip()
-        tokens = [t for t in re.split(r"\W+", name_clean) if len(t) > 2]
-        if not tokens:
-            tokens = [re.split(r"\W+", company)[0]]
+        if not tokens or not slug:
+            return True  # can't validate — let it through
 
-        # At least one meaningful token must appear in the page metadata
-        return any(tok.lower() in text for tok in tokens)
+        # ── Stage 1: each token must exactly match the slug, OR the joined
+        #    tokens must exactly equal the slug (handles multi-word names).
+        joined = "".join(tokens)
+        stage1 = (joined == slug) or all(tok == slug for tok in tokens) or slug in tokens
+
+        if stage1:
+            return True
+
+        # ── Stage 2: fetch homepage, check meta tags with whole-word matching ──
+        try:
+            resp = requests.get(
+                domain, timeout=6,
+                headers={"User-Agent": "Mozilla/5.0 (compatible; BuyingIntentBot/1.0)"},
+                allow_redirects=True,
+            )
+            if resp.status_code >= 400:
+                return False
+
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(resp.text[:60_000], "lxml")
+
+            candidates = []
+            if soup.title and soup.title.string:
+                candidates.append(soup.title.string)
+            for attr in ("og:site_name", "og:title", "application-name"):
+                tag = (soup.find("meta", attrs={"property": attr})
+                       or soup.find("meta", attrs={"name": attr}))
+                if tag and tag.get("content"):
+                    candidates.append(tag["content"])
+
+            # Split page text into whole words for exact matching (no substring)
+            page_words = set(re.split(r"[^a-z0-9]+", " ".join(candidates).lower()))
+            return all(tok in page_words for tok in tokens)
+
+        except Exception:
+            return True  # network error — don't block the scan
+
     except Exception:
-        # Can't reach the site — let it through rather than block on network issues
         return True
 
 
@@ -180,130 +226,145 @@ async def analyze(company: str, domain: str | None = None, signals: str | None =
 
 
 @app.get("/company-info")
-async def company_info(company: str):
+async def company_info(company: str, domain: str | None = None):
     def _fetch():
         try:
             headers = {"User-Agent": "BuyingIntentEngine/1.0"}
 
-            # 1. Wikipedia: search → title + wikibase QID + description
-            search_r = requests.get(
-                "https://en.wikipedia.org/w/api.php",
-                params={"action": "query", "list": "search", "srsearch": company,
-                        "format": "json", "srlimit": 1},
-                timeout=5, headers=headers,
-            ).json()
-            hits = search_r.get("query", {}).get("search", [])
-            if not hits:
+            # ── 1. Wikipedia REST summary — single reliable call ──────────────
+            # Try exact title first, then fall back to search
+            slug = company.replace(" ", "_").replace(",", "%2C")
+            def _is_disambiguation(s: dict) -> bool:
+                return s.get("type") == "disambiguation" or "may refer to" in s.get("extract", "").lower()
+
+            rest = requests.get(
+                f"https://en.wikipedia.org/api/rest_v1/page/summary/{slug}",
+                headers=headers, timeout=5,
+            )
+            summary = rest.json() if rest.status_code == 200 else {}
+
+            # If disambiguation page or not found, search for "<company> company"
+            if rest.status_code != 200 or _is_disambiguation(summary):
+                sr = requests.get(
+                    "https://en.wikipedia.org/w/api.php",
+                    params={"action": "query", "list": "search",
+                            "srsearch": f"{company} company", "format": "json", "srlimit": 1},
+                    headers=headers, timeout=5,
+                ).json()
+                hits = sr.get("query", {}).get("search", [])
+                if not hits:
+                    return {}
+                title = hits[0]["title"]
+                slug2 = title.replace(" ", "_").replace(",", "%2C")
+                rest2 = requests.get(
+                    f"https://en.wikipedia.org/api/rest_v1/page/summary/{slug2}",
+                    headers=headers, timeout=5,
+                )
+                if rest2.status_code == 200:
+                    summary = rest2.json()
+
+            if not summary:
                 return {}
-            title = hits[0]["title"]
 
-            page_r = requests.get(
+            title = summary.get("title", company)
+            description = summary.get("description", "") or ""
+            # Prefer the first sentence of extract (more informative than the short description)
+            extract = summary.get("extract", "")
+            if extract and not _is_disambiguation(summary):
+                first_sentence = re.split(r"(?<=[.!?])\s+", extract)[0]
+                if len(first_sentence) > len(description):
+                    description = first_sentence
+
+            # ── 2. QID from pageprops ─────────────────────────────────────────
+            pr = requests.get(
                 "https://en.wikipedia.org/w/api.php",
-                params={"action": "query", "prop": "extracts|pageprops",
-                        "exintro": True, "exsentences": 2,
-                        "titles": title, "format": "json", "redirects": True},
-                timeout=5, headers=headers,
+                params={"action": "query", "prop": "pageprops", "titles": title,
+                        "format": "json", "redirects": True},
+                headers=headers, timeout=5,
             ).json()
-            pages = page_r.get("query", {}).get("pages", {})
-            page = next(iter(pages.values()))
-            raw = page.get("extract", "")
-            description = re.sub(r"<[^>]+>", "", raw).strip()
-            sentences = re.split(r"(?<=[.!?])\s+", description)
-            description = " ".join(sentences[:2]).strip()
+            pages = pr.get("query", {}).get("pages", {})
+            qid = next(iter(pages.values())).get("pageprops", {}).get("wikibase_item", "")
 
-            # 2. Wikidata: revenue, HQ, industry via QID
-            qid = page.get("pageprops", {}).get("wikibase_item", "")
             revenue = hq = industry = None
             if qid:
-                wd_r = requests.get(
+                # ── 3. Wikidata entity — one call for all claims ──────────────
+                wr = requests.get(
                     "https://www.wikidata.org/w/api.php",
                     params={"action": "wbgetentities", "ids": qid,
                             "props": "claims", "languages": "en", "format": "json"},
-                    timeout=6, headers=headers,
+                    headers=headers, timeout=6,
                 ).json()
-                claims = wd_r.get("entities", {}).get(qid, {}).get("claims", {})
+                claims = wr.get("entities", {}).get(qid, {}).get("claims", {})
 
-                # Collect QIDs to resolve in one batch request
-                qids_to_resolve = set()
-                hq_qid = ind_qid = None
+                qids_to_resolve: set[str] = set()
+                hq_qid = ind_qid = country_qid = None
 
-                # P159 = HQ location
-                hq_claims = claims.get("P159", [])
-                if hq_claims:
-                    v = hq_claims[0]["mainsnak"].get("datavalue", {}).get("value", {})
-                    hq_qid = v.get("id") if isinstance(v, dict) else None
-                    if hq_qid:
-                        qids_to_resolve.add(hq_qid)
+                def _qid(claim_list):
+                    if not claim_list:
+                        return None
+                    v = claim_list[0]["mainsnak"].get("datavalue", {}).get("value", {})
+                    return v.get("id") if isinstance(v, dict) else None
 
-                # P452 = industry
-                ind_claims = claims.get("P452", [])
-                if ind_claims:
-                    v = ind_claims[0]["mainsnak"].get("datavalue", {}).get("value", {})
-                    ind_qid = v.get("id") if isinstance(v, dict) else None
-                    if ind_qid:
-                        qids_to_resolve.add(ind_qid)
+                hq_qid = _qid(claims.get("P159", []))
+                ind_qid = _qid(claims.get("P452", []))
+                country_qid = _qid(claims.get("P17", []))
+                for q in (hq_qid, ind_qid, country_qid):
+                    if q:
+                        qids_to_resolve.add(q)
 
-                # P17 = country (always fetch to combine with city)
-                country_qid = None
-                country_claims = claims.get("P17", [])
-                if country_claims:
-                    v = country_claims[0]["mainsnak"].get("datavalue", {}).get("value", {})
-                    country_qid = v.get("id") if isinstance(v, dict) else None
-                    if country_qid:
-                        qids_to_resolve.add(country_qid)
-
-                # Batch-resolve all QID labels
-                labels = {}
+                # ── 4. Batch-resolve labels ───────────────────────────────────
+                labels: dict[str, str] = {}
                 if qids_to_resolve:
-                    label_r = requests.get(
+                    lr = requests.get(
                         "https://www.wikidata.org/w/api.php",
                         params={"action": "wbgetentities", "ids": "|".join(qids_to_resolve),
                                 "props": "labels", "languages": "en", "format": "json"},
-                        timeout=6, headers=headers,
+                        headers=headers, timeout=5,
                     ).json()
-                    for q, e in label_r.get("entities", {}).items():
+                    for q, e in lr.get("entities", {}).items():
                         labels[q] = e.get("labels", {}).get("en", {}).get("value", "")
 
-                city = labels.get(hq_qid, "") if hq_qid else ""
+                city_raw = labels.get(hq_qid, "") if hq_qid else ""
                 country = labels.get(country_qid, "") if country_qid else ""
-                if city and country:
-                    hq = f"{city}, {country}"
-                elif city:
-                    hq = city
-                elif country:
-                    hq = country
-                if ind_qid and labels.get(ind_qid):
-                    industry = labels[ind_qid]
+                # If HQ resolved to a building/tower, look up its city via P131
+                if hq_qid and city_raw and any(w in city_raw.lower() for w in ("tower", "building", "campus", "plaza", "center", "centre", "park")):
+                    p131_claims = wr.get("entities", {}).get(qid, {}).get("claims", {})
+                    # actually fetch P131 of the HQ entity itself
+                    hq_entity = requests.get(
+                        "https://www.wikidata.org/w/api.php",
+                        params={"action": "wbgetentities", "ids": hq_qid,
+                                "props": "claims", "languages": "en", "format": "json"},
+                        headers=headers, timeout=5,
+                    ).json()
+                    hq_claims2 = hq_entity.get("entities", {}).get(hq_qid, {}).get("claims", {})
+                    city_qid2 = _qid(hq_claims2.get("P131", []))
+                    if city_qid2:
+                        lr2 = requests.get(
+                            "https://www.wikidata.org/w/api.php",
+                            params={"action": "wbgetentities", "ids": city_qid2,
+                                    "props": "labels", "languages": "en", "format": "json"},
+                            headers=headers, timeout=4,
+                        ).json()
+                        city_raw = lr2.get("entities", {}).get(city_qid2, {}).get("labels", {}).get("en", {}).get("value", city_raw)
+                hq = ", ".join(filter(None, [city_raw, country])) or None
 
-                # P2139 = total revenue (most recent)
-                rev_claims = claims.get("P2139", [])
-                if rev_claims:
-                    # Pick claim with most recent point-in-time qualifier (P585) if available
-                    best = rev_claims[0]
-                    best_year = 0
-                    for cl in rev_claims:
-                        qualifiers = cl.get("qualifiers", {})
-                        pts = qualifiers.get("P585", [])
-                        if pts:
-                            try:
-                                yr = int(pts[0]["datavalue"]["value"]["time"][1:5])
-                                if yr > best_year:
-                                    best_year = yr
-                                    best = cl
-                            except Exception:
-                                pass
-                    rv = best["mainsnak"].get("datavalue", {}).get("value", {})
-                    amount_str = rv.get("amount", "")
-                    if amount_str:
-                        amount = abs(float(amount_str))
-                        if amount >= 1e9:
-                            revenue = f"${amount / 1e9:.1f}B"
-                        elif amount >= 1e6:
-                            revenue = f"${amount / 1e6:.0f}M"
-                        else:
-                            revenue = f"${amount:,.0f}"
-                        if best_year:
-                            revenue += f" ({best_year})"
+                raw_ind = labels.get(ind_qid, "") if ind_qid else ""
+                # Tidy up Wikidata's generic labels like "clothing industry"
+                industry = re.sub(r"\s+industry$", "", raw_ind, flags=re.IGNORECASE).title() if raw_ind else None
+
+                # ── 5. Revenue — most recent year ─────────────────────────────
+                best_rev = best_year = None
+                for cl in claims.get("P2139", []):
+                    pts = cl.get("qualifiers", {}).get("P585", [])
+                    yr = int(pts[0]["datavalue"]["value"]["time"][1:5]) if pts else 0
+                    if best_year is None or yr >= best_year:
+                        best_year = yr or None
+                        best_rev = cl["mainsnak"].get("datavalue", {}).get("value", {}).get("amount")
+                if best_rev:
+                    amt = abs(float(best_rev))
+                    revenue = f"${amt / 1e9:.1f}B" if amt >= 1e9 else f"${amt / 1e6:.0f}M"
+                    if best_year:
+                        revenue += f" ({best_year})"
 
             return {
                 "name": title,
@@ -314,6 +375,7 @@ async def company_info(company: str):
             }
         except Exception:
             return {}
+
     info = await asyncio.to_thread(_fetch)
     return JSONResponse(info)
 
