@@ -219,6 +219,14 @@ async def analyze(company: str, domain: str | None = None, signals: str | None =
     company = company.strip().title()
     inferred_domain = _clean_domain(domain) if domain else f"https://www.{company.lower().replace(' ', '')}.com"
     selected = set(signals.split(",")) if signals else None
+
+    # Log this search to searches.json
+    asyncio.create_task(asyncio.to_thread(_save_search, {
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "company": company,
+        "domain": inferred_domain,
+    }))
+
     return StreamingResponse(
         _stream_analysis(company, inferred_domain, selected),
         media_type="text/event-stream",
@@ -392,6 +400,22 @@ class ReportRequest(BaseModel):
 
 
 REPORTS_FILE = Path(__file__).parent / "reports.json"
+SEARCHES_FILE = Path(__file__).parent / "searches.json"
+
+
+def _load_searches() -> list:
+    if SEARCHES_FILE.exists():
+        try:
+            return json.loads(SEARCHES_FILE.read_text())
+        except Exception:
+            return []
+    return []
+
+
+def _save_search(entry: dict):
+    searches = _load_searches()
+    searches.append(entry)
+    SEARCHES_FILE.write_text(json.dumps(searches, indent=2))
 
 
 def _load_reports() -> list:
@@ -450,6 +474,34 @@ async def view_reports(key: str = ""):
     th{{background:#f4f4f6;font-weight:700}}tr:nth-child(even){{background:#fafafa}}</style></head>
     <body><h2>Inaccuracy Reports ({len(reports)} total)</h2>
     <table><thead><tr><th>Time (UTC)</th><th>Company</th><th>Intent / Score</th><th>Issues</th><th>Details</th><th>Reporter</th></tr></thead>
+    <tbody>{rows}</tbody></table></body></html>"""
+    return HTMLResponse(html)
+
+
+@app.get("/admin/searches")
+async def view_searches(key: str = ""):
+    admin_key = os.environ.get("ADMIN_KEY", "")
+    if admin_key and key != admin_key:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    searches = _load_searches()
+    # Count frequency per company
+    from collections import Counter
+    freq = Counter(s.get("company", "") for s in searches)
+    rows = "".join(
+        f"""<tr>
+          <td>{s.get('timestamp','')[:19].replace('T',' ')}</td>
+          <td><strong>{s.get('company','')}</strong></td>
+          <td>{s.get('domain','')}</td>
+          <td style="text-align:center">{freq[s.get('company','')]}</td>
+        </tr>"""
+        for s in reversed(searches)
+    )
+    html = f"""<!doctype html><html><head><title>Search History</title>
+    <style>body{{font-family:sans-serif;padding:24px;font-size:13px}}
+    table{{border-collapse:collapse;width:100%}}th,td{{border:1px solid #ddd;padding:8px 10px;text-align:left;vertical-align:top}}
+    th{{background:#f4f4f6;font-weight:700}}tr:nth-child(even){{background:#fafafa}}</style></head>
+    <body><h2>Search History ({len(searches)} total searches)</h2>
+    <table><thead><tr><th>Time (UTC)</th><th>Company</th><th>Domain</th><th>Times Searched</th></tr></thead>
     <tbody>{rows}</tbody></table></body></html>"""
     return HTMLResponse(html)
 
