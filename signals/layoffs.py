@@ -1,12 +1,13 @@
 """Layoffs signal collector using Layoffs.fyi dataset and Google News RSS."""
 
+import re
 import time
 from dataclasses import dataclass, field
 
 import requests
 from bs4 import BeautifulSoup
 
-from .utils import company_in_text
+from .utils import company_in_text, is_recent
 
 LAYOFFS_FYI_URL = "https://layoffs.fyi"
 
@@ -32,8 +33,14 @@ def _check_layoffs_fyi(company_name: str) -> list[dict]:
             if company_in_text(company_name, row_text):
                 cells = [td.get_text(strip=True) for td in row.find_all("td")]
                 if cells and len(cells) >= 2:
+                    # layoffs.fyi typically has date in one of the first few cells (ISO format)
+                    row_date = next(
+                        (c for c in cells[:6] if re.match(r"\d{4}-\d{2}-\d{2}", c)), ""
+                    )
+                    if row_date and not is_recent(row_date, max_days=365):
+                        continue  # skip entries older than 1 year
                     label = " | ".join(c for c in cells[:4] if c)
-                    matches.append({"title": label, "link": "", "source": "layoffs.fyi"})
+                    matches.append({"title": label, "link": "", "pubDate": row_date, "source": "layoffs.fyi"})
         time.sleep(0.3)
         return matches
     except Exception:
@@ -56,9 +63,9 @@ def _check_news_layoffs(company_name: str) -> list[dict]:
             link = item.find("link").text if item.find("link") else ""
             pub_date = item.find("pubDate").text if item.find("pubDate") else ""
             # Must mention the company AND a layoff keyword
-            if company_in_text(company_name, title) and any(
-                kw in title.lower() for kw in ["layoff", "laid off", "cut", "workforce", "reduction", "job"]
-            ):
+            if (is_recent(pub_date, max_days=180)  # layoffs older than 6 months aren't actionable
+                    and company_in_text(company_name, title)
+                    and any(kw in title.lower() for kw in ["layoff", "laid off", "cut", "workforce", "reduction", "job"])):
                 results.append({"title": title, "link": link, "pubDate": pub_date, "source": "google_news"})
         return results
     except Exception:

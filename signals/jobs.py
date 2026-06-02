@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 
 import requests
 
-from .utils import company_in_text
+from .utils import company_in_text, is_recent
 
 def _get_serp_key() -> str:
     return os.getenv("SERPAPI_KEY", "")
@@ -35,6 +35,7 @@ def _search_serpapi(company_name: str) -> list[dict]:
         "q": f"{company_name} software OR IT OR engineer OR cloud OR operations",
         "api_key": _get_serp_key(),
         "num": 10,
+        "chips": "date_posted:month",  # only postings from the past 30 days
     }
     try:
         resp = requests.get(url, params=params, timeout=15)
@@ -64,11 +65,12 @@ def _search_rss_fallback(company_name: str) -> list[dict]:
         for item in items:
             title = item.find("title").text if item.find("title") else ""
             link = item.find("link").text if item.find("link") else ""
-            # Must mention the company AND a hiring keyword
-            if company_in_text(company_name, title) and any(
-                kw in title.lower() for kw in ["hiring", "job", "career", "recruit", "opening", "position"]
-            ):
-                results.append({"title": title, "link": link, "source": "news_rss"})
+            pub_date = item.find("pubDate").text if item.find("pubDate") else ""
+            # Must be recent (90 days), mention the company, AND a hiring keyword
+            if (is_recent(pub_date, max_days=90)
+                    and company_in_text(company_name, title)
+                    and any(kw in title.lower() for kw in ["hiring", "job", "career", "recruit", "opening", "position"])):
+                results.append({"title": title, "link": link, "pubDate": pub_date, "source": "news_rss"})
         return results
     except Exception:
         return []

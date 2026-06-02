@@ -197,7 +197,7 @@ def _atom_filings(company_name: str, form_type: str, lookback_days: int) -> list
 # ── Collector ─────────────────────────────────────────────────────────────────
 
 class SecEdgarCollector:
-    def __init__(self, lookback_days: int = 730):  # 2 years default
+    def __init__(self, lookback_days: int = 365):  # 1 year — keeps signals current
         self.lookback_days = lookback_days
 
     def collect(self, company_name: str) -> list[EdgarSignal]:

@@ -9,7 +9,7 @@ from urllib.parse import quote
 import requests
 from bs4 import BeautifulSoup
 
-from .utils import company_in_text
+from .utils import company_in_text, is_recent
 
 GNEWS_RSS = "https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en"
 
@@ -93,7 +93,8 @@ def _fetch_serpapi(query: str, max_results: int = 15) -> list[dict]:
     try:
         resp = requests.get(
             "https://serpapi.com/search",
-            params={"engine": "google_news", "q": query, "api_key": api_key, "num": max_results},
+            params={"engine": "google_news", "q": query, "api_key": api_key,
+                    "num": max_results, "tbs": "qdr:y"},  # past 12 months only
             timeout=10,
         )
         resp.raise_for_status()
@@ -119,15 +120,17 @@ def _fetch_rss(query: str, max_results: int = 15) -> list[dict]:
         resp.raise_for_status()
         soup = BeautifulSoup(resp.content, "xml")
         items = soup.find_all("item")[:max_results]
-        results = [
-            {
+        results = []
+        for item in items:
+            pub_date = item.find("pubDate").text if item.find("pubDate") else ""
+            if not is_recent(pub_date, max_days=365):
+                continue
+            results.append({
                 "title": item.find("title").text if item.find("title") else "",
                 "link": item.find("link").text if item.find("link") else "",
-                "pubDate": item.find("pubDate").text if item.find("pubDate") else "",
+                "pubDate": pub_date,
                 "source": item.find("source").text if item.find("source") else "",
-            }
-            for item in items
-        ]
+            })
         return results
     except Exception:
         return []

@@ -1,6 +1,28 @@
 """Shared helpers for signal collectors."""
 
 import re
+from datetime import datetime, timezone
+
+
+def is_recent(pub_date_str: str, max_days: int = 365) -> bool:
+    """Return True if pub_date_str is within max_days of today (or unparseable/missing).
+
+    Accepts RFC 2822 format ("Mon, 15 Jan 2024 10:00:00 +0000") used by RSS feeds,
+    as well as ISO 8601 ("2024-01-15") used by SEC EDGAR and some APIs.
+    When the date cannot be parsed we allow the item through (fail open).
+    """
+    if not pub_date_str:
+        return True
+    try:
+        from email.utils import parsedate_to_datetime
+        dt = parsedate_to_datetime(pub_date_str)
+    except Exception:
+        try:
+            dt = datetime.fromisoformat(pub_date_str[:10]).replace(tzinfo=timezone.utc)
+        except Exception:
+            return True  # unparseable — don't discard
+    age_days = (datetime.now(timezone.utc) - dt).days
+    return age_days <= max_days
 
 # Common corporate suffixes to strip before matching
 _STRIP_SUFFIXES = re.compile(
