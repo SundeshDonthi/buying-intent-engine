@@ -3,6 +3,8 @@
 import asyncio
 import json
 import os
+import smtplib
+from email.mime.text import MIMEText
 from pathlib import Path
 from typing import AsyncGenerator
 
@@ -378,6 +380,59 @@ async def company_info(company: str, domain: str | None = None):
 
     info = await asyncio.to_thread(_fetch)
     return JSONResponse(info)
+
+
+class ReportRequest(BaseModel):
+    company: str = ""
+    domain: str = ""
+    intent_level: str = ""
+    total_score: str = ""
+    issues_selected: str = ""
+    message: str = ""
+    email: str = ""
+
+
+@app.post("/report")
+async def submit_report(body: ReportRequest):
+    def _send():
+        smtp_user = os.environ.get("REPORT_EMAIL", "")
+        smtp_pass = os.environ.get("REPORT_EMAIL_PASSWORD", "")
+        to_addr   = os.environ.get("REPORT_TO_EMAIL", smtp_user)
+
+        if not smtp_user or not smtp_pass:
+            # Fallback: just log to stdout (visible in Railway logs)
+            print(f"[REPORT] Company={body.company} | Issues={body.issues_selected} "
+                  f"| Score={body.total_score} | From={body.email} | Note={body.message}")
+            return {"success": True}
+
+        subject = f"Inaccuracy Report — {body.company or 'Unknown'}"
+        body_text = (
+            f"Company:       {body.company}\n"
+            f"Domain:        {body.domain}\n"
+            f"Intent Level:  {body.intent_level}\n"
+            f"Score:         {body.total_score}\n"
+            f"Issues:        {body.issues_selected}\n"
+            f"Reporter:      {body.email or '(anonymous)'}\n\n"
+            f"Details:\n{body.message or '(none)'}"
+        )
+
+        msg = MIMEText(body_text)
+        msg["Subject"] = subject
+        msg["From"]    = smtp_user
+        msg["To"]      = to_addr
+        if body.email:
+            msg["Reply-To"] = body.email
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as server:
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(smtp_user, [to_addr], msg.as_string())
+        return {"success": True}
+
+    try:
+        result = await asyncio.to_thread(_send)
+        return JSONResponse(result)
+    except Exception as e:
+        return JSONResponse({"success": False, "message": str(e)}, status_code=500)
 
 
 @app.get("/", response_class=HTMLResponse)

@@ -1567,23 +1567,20 @@ async function submitReport() {
   try {
     const issues = checks.length ? checks.join(', ') : 'Not specified';
     const payload = {
-      access_key: 'e0dd563d-8296-4ed9-bf1b-129a49a6d258',
-      subject: `Inaccuracy Report — ${lastResult ? lastResult.company : 'Unknown'}`,
-      from_name: 'Buying Intent Engine',
-      email: email || 'noreply@buyingintent.app',
       company: lastResult ? lastResult.company : '',
       domain: lastResult ? lastResult.domain : '',
       intent_level: lastResult ? lastResult.intent_level : '',
       total_score: lastResult ? String(lastResult.total_score) : '',
       issues_selected: issues,
       message: note || '(no additional details)',
+      email: email || '',
     };
-    const r = await fetch('https://api.web3forms.com/submit', {
+    const r = await fetch('/report', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    const res = await r.json();
+    const res = await r.json().catch(() => ({}));
     if (res.success) {
       document.getElementById('reportModal').innerHTML = `
         <div style="padding:32px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px">
