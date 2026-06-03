@@ -1,8 +1,12 @@
 """FastAPI server for the Buying Intent Engine web app."""
 
 import asyncio
+import csv
+import io
 import json
 import os
+import threading
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import AsyncGenerator
@@ -39,6 +43,11 @@ from signals import (
 app = FastAPI(title="Buying Intent Engine")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+@app.on_event("startup")
+async def _preload_sf():
+    await asyncio.to_thread(_load_sf_data)
 
 
 class AnalyzeRequest(BaseModel):
@@ -145,6 +154,106 @@ def _validate_company(company: str, domain: str) -> bool:
         return True
 
 
+SF_CSV_URL = (
+    "https://docs.google.com/spreadsheets/d/e/"
+    "2PACX-1vSStB4yLAUhhWR_ivL9O8da1nKG5p9JgIZmqzZi6KQdvh5bSBdut7qD18TkrlfhhAOaNK0xvzwzr2kh"
+    "/pub?output=csv"
+)
+_sf_cache: dict = {"domain_map": {}, "name_map": {}, "loaded_at": 0.0}
+_sf_lock = threading.Lock()
+
+
+def _load_sf_data() -> dict:
+    """Fetch and cache Salesforce CSV. Refreshes every hour."""
+    now = time.time()
+    with _sf_lock:
+        if _sf_cache["loaded_at"] and (now - _sf_cache["loaded_at"]) < 3600:
+            return _sf_cache
+    try:
+        resp = requests.get(SF_CSV_URL, timeout=20)
+        resp.raise_for_status()
+        lines = resp.text.splitlines()
+        # Find the real header row (starts with "Account Name")
+        header_idx = next((i for i, l in enumerate(lines) if l.startswith("Account Name")), None)
+        if header_idx is None:
+            return _sf_cache  # return stale
+        reader = csv.DictReader(io.StringIO("\n".join(lines[header_idx:])))
+        domain_map: dict = {}
+        name_map: dict = {}
+        for row in reader:
+            acct = row.get("Account Name", "").strip()
+            if not acct:
+                continue
+            website = row.get("Website", "").strip()
+            if website:
+                slug = _domain_slug(website)
+                if slug and slug not in domain_map:
+                    domain_map[slug] = row
+            name_key = "".join(_name_tokens(acct))
+            if name_key and name_key not in name_map:
+                name_map[name_key] = row
+        with _sf_lock:
+            _sf_cache["domain_map"] = domain_map
+            _sf_cache["name_map"] = name_map
+            _sf_cache["loaded_at"] = now
+    except Exception as e:
+        print(f"[SF] Failed to load data: {e}")
+    return _sf_cache
+
+
+def _lookup_sf(company: str, domain: str) -> dict | None:
+    """Return the matching Salesforce row dict, or None if not found."""
+    sf = _load_sf_data()
+    # 1. Domain slug match (most reliable)
+    slug = _domain_slug(domain)
+    if slug:
+        row = sf["domain_map"].get(slug)
+        if row:
+            return row
+    # 2. Name token match (fallback)
+    name_key = "".join(_name_tokens(company))
+    if name_key:
+        row = sf["name_map"].get(name_key)
+        if row:
+            return row
+    return None
+
+
+def _format_sf_data(row: dict) -> dict:
+    """Convert a raw CSV row to the dict sent to the frontend."""
+    revenue_raw = row.get("Annual Revenue", "").strip()
+    revenue_fmt = ""
+    if revenue_raw:
+        try:
+            rev = float(revenue_raw)
+            if rev >= 1_000_000_000:
+                revenue_fmt = f"${rev/1_000_000_000:.1f}B"
+            elif rev >= 1_000_000:
+                revenue_fmt = f"${rev/1_000_000:.1f}M"
+            else:
+                revenue_fmt = f"${rev:,.0f}"
+        except ValueError:
+            revenue_fmt = revenue_raw
+    city = row.get("Billing City", "").strip()
+    state = row.get("Billing State (International)", "").strip()
+    country = row.get("Billing Country", "").strip()
+    location_parts = [p for p in [city, state, country] if p]
+    return {
+        "account_name":      row.get("Account Name", "").strip(),
+        "account_id":        row.get("Account ID", "").strip(),
+        "account_status":    row.get("Account Status", "").strip(),
+        "account_owner":     row.get("Account Owner", "").strip(),
+        "bd_owner":          row.get("BD Owner (Account)", "").strip(),
+        "bd_priority_date":  row.get("BD Priority Date", "").strip(),
+        "annual_revenue":    revenue_fmt,
+        "industry":          row.get("Industry [IA]", "").strip(),
+        "sub_industry":      row.get("Sub-Industry [IA]", "").strip(),
+        "suppression_reason":row.get("Target Suppression Reason", "").strip(),
+        "suppression_date":  row.get("Target Suppression Date", "").strip(),
+        "location":          ", ".join(location_parts),
+    }
+
+
 async def _stream_analysis(company: str, domain: str, selected_signals: set[str] | None = None) -> AsyncGenerator[str, None]:
     def send(event: str, data: dict) -> str:
         return f"event: {event}\ndata: {json.dumps(data)}\n\n"
@@ -179,6 +288,10 @@ async def _stream_analysis(company: str, domain: str, selected_signals: set[str]
 
     report = score_signals(company, domain, all_signals)
 
+    # Salesforce lookup
+    sf_row = await asyncio.to_thread(_lookup_sf, company, domain)
+    sf_data = _format_sf_data(sf_row) if sf_row else None
+
     signals_data = [
         {
             "name": s.signal_name,
@@ -195,12 +308,8 @@ async def _stream_analysis(company: str, domain: str, selected_signals: set[str]
     yield send("result", {
         "company": report.company_name,
         "domain": report.domain,
-        "total_score": report.total_score,
-        "intent_level": report.intent_level,
-        "positive_score": report.positive_score,
-        "negative_score": report.negative_score,
-        "neutral_score": report.neutral_score,
         "signals": signals_data,
+        "sf_data": sf_data,
     })
 
 

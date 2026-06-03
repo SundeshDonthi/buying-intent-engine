@@ -217,6 +217,26 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
 .co-info-val a:hover{text-decoration:underline}
 .co-info-val.loading{color:var(--ink3);font-weight:400;font-style:italic}
 
+/* ── Salesforce card ── */
+.sf-card{padding:22px 28px;border-bottom:1px solid var(--line);background:var(--white)}
+.sf-card-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.sf-badge{display:inline-flex;align-items:center;gap:6px;background:#00A1E0;color:#fff;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:4px 10px;border-radius:6px}
+.sf-not-found{font-size:13.5px;color:var(--ink3);font-style:italic}
+.sf-status-chip{font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px}
+.sf-status-chip.active{background:var(--green-bg);color:var(--green)}
+.sf-status-chip.closed{background:var(--red-bg);color:var(--red)}
+.sf-status-chip.other{background:var(--bg);color:var(--ink2);border:1px solid var(--line2)}
+.sf-suppressed{display:inline-flex;align-items:center;gap:6px;background:var(--orange-bg);color:var(--orange);font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px}
+.sf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+@media(max-width:700px){.sf-grid{grid-template-columns:repeat(2,1fr)}}
+.sf-field{padding:12px 16px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.sf-field:nth-child(4n){border-right:none}
+.sf-field:nth-last-child(-n+4){border-bottom:none}
+@media(max-width:700px){.sf-field:nth-child(2n){border-right:none}.sf-field:nth-last-child(-n+2){border-bottom:none}.sf-field:nth-child(4n){border-right:1px solid var(--line)}.sf-field:nth-child(odd){border-right:1px solid var(--line)}}
+.sf-field-label{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink3);margin-bottom:4px}
+.sf-field-val{font-size:13px;font-weight:600;color:var(--ink);line-height:1.35}
+.sf-field-val.empty{color:var(--ink3);font-weight:400;font-style:italic}
+
 /* ── ai summary + BD rec ── */
 .insight-block{padding:22px 28px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#f7f9ff,var(--white));display:flex;flex-direction:column;gap:16px}
 .insight-section{display:flex;flex-direction:column;gap:8px}
@@ -424,8 +444,8 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
 <div class="wrap" id="scan-pane">
   <div class="hero">
     <div class="kicker">Sales &amp; BD</div>
-    <h1>Type a company. Watch the <em>signals</em>, get a score.</h1>
-    <p>The engine checks public buying signals one by one — SEC filings, news, job postings, layoffs, and tech stack — then scores the account's overall buying intent.</p>
+    <h1>Type a company. See the <em>signals</em> and Salesforce context.</h1>
+    <p>The engine checks public buying signals one by one — SEC filings, news, job postings, layoffs, and tech stack — and matches the account to your Salesforce data so you always know where it stands.</p>
   </div>
 
   <!-- Scan form -->
@@ -467,8 +487,8 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
       <div class="reshead" id="reshead"></div>
       <!-- company info strip -->
       <div class="co-info-strip" id="coInfoStrip"></div>
-      <!-- score -->
-      <div class="summary" id="scoreSummary"></div>
+      <!-- Salesforce card -->
+      <div id="sfCard"></div>
       <!-- insights -->
       <div class="insight-block" id="insightBlock" style="display:none"></div>
       <!-- export bar -->
@@ -777,7 +797,6 @@ async function runSignalsScan() {
         </div>
         <div class="srow-right">
           <div class="srow-verdict ${s.found?'yes':'no'}">${s.found?'Detected':'Not found'}</div>
-          ${s.found && sc !== 0 ? `<div class="srow-score" style="color:${sc>0?'var(--green)':'var(--red)'}">${sc>0?'+':''}${sc} pts</div>` : ''}
         </div>
       </div>`;
     }).join('');
@@ -805,22 +824,6 @@ const STEP_META = {
   jobs:       { icon: '💼', label: 'Job postings',            shortLabel: 'Jobs' },
   layoffs:    { icon: '📉', label: 'Layoffs.fyi + news',      shortLabel: 'Layoffs' },
   tech_stack: { icon: '🔍', label: 'Tech stack fingerprint',  shortLabel: 'Tech\nStack' },
-};
-
-const INTENT_CLASS = {
-  'Strong Buyer':    'strong-buyer',
-  'Potential Buyer': 'potential-buyer',
-  'Neutral':         'neutral',
-  'Poor Fit':        'poor-fit',
-  'Disqualified':    'disqualified',
-};
-
-const INTENT_ICON = {
-  'Strong Buyer':    '🟢',
-  'Potential Buyer': '🔵',
-  'Neutral':         '⚪',
-  'Poor Fit':        '🟡',
-  'Disqualified':    '🔴',
 };
 
 // ── Analysis ───────────────────────────────────────────────────────────────
@@ -965,34 +968,8 @@ function renderResult(d) {
       <div class="domlink">🌐 <a href="${esc(d.domain)}" target="_blank">${cleanDomain(d.domain)}</a></div>
     </div>`;
 
-  // score ring
-  const intentClass = INTENT_CLASS[d.intent_level] || 'neutral';
-  const icon = INTENT_ICON[d.intent_level] || '⚪';
-  const pct = Math.max(0, Math.min(100, (d.total_score + 100) / 200 * 100));
-  const circ = 2 * Math.PI * 46;
-  const offset = circ - (pct / 100) * circ;
-  document.getElementById('scoreSummary').innerHTML = `
-    <div class="scoreblock">
-      <div class="ring">
-        <svg viewBox="0 0 108 108">
-          <circle class="ring-bg" cx="54" cy="54" r="46"/>
-          <circle class="ring-fg" cx="54" cy="54" r="46" stroke-dasharray="${circ}" stroke-dashoffset="${offset}"/>
-        </svg>
-        <div class="ring-num">
-          <span>${d.total_score > 0 ? '+' : ''}${d.total_score}</span>
-          <span class="ring-den">SCORE</span>
-        </div>
-      </div>
-      <div class="scoremeta">
-        <div class="scorelabel">Intent classification</div>
-        <div class="intent-badge ${intentClass}">${icon} ${d.intent_level}</div>
-        <div class="breakdown">
-          <div class="bd pos">+${d.positive_score} positive</div>
-          <div class="bd neg">${d.negative_score} negative</div>
-          <div class="bd neu">${d.neutral_score > 0 ? d.neutral_score + ' noted' : 'no context signals'}</div>
-        </div>
-      </div>
-    </div>`;
+  // Salesforce card
+  renderSFCard(d.sf_data);
 
   renderSignals(allSignals, currentFilter);
   document.getElementById('resultArea').classList.remove('hide');
@@ -1003,6 +980,59 @@ function renderResult(d) {
 
   // Render insights
   renderInsights(d);
+}
+
+function renderSFCard(sf) {
+  const el = document.getElementById('sfCard');
+  if (!sf) {
+    el.innerHTML = `
+      <div class="sf-card">
+        <div class="sf-card-header">
+          <span class="sf-badge">⚡ Salesforce</span>
+          <span class="sf-not-found">Not found in Salesforce — this may be a new prospect</span>
+        </div>
+      </div>`;
+    return;
+  }
+
+  // Status chip
+  const status = sf.account_status || '';
+  const statusLower = status.toLowerCase();
+  const chipClass = statusLower.includes('active') || statusLower.includes('customer') ? 'active'
+    : statusLower.includes('lost') || statusLower.includes('dead') || statusLower.includes('closed') ? 'closed'
+    : 'other';
+
+  // Suppression warning
+  const suppressHtml = sf.suppression_reason
+    ? `<span class="sf-suppressed">⚠ Suppressed: ${esc(sf.suppression_reason)}${sf.suppression_date ? ' · ' + esc(sf.suppression_date) : ''}</span>`
+    : '';
+
+  const fields = [
+    { label: 'Account ID',    val: sf.account_id },
+    { label: 'Account Status', val: sf.account_status },
+    { label: 'Account Owner', val: sf.account_owner },
+    { label: 'BD Owner',      val: sf.bd_owner },
+    { label: 'BD Priority Date', val: sf.bd_priority_date },
+    { label: 'Annual Revenue', val: sf.annual_revenue },
+    { label: 'Industry',      val: sf.industry + (sf.sub_industry ? ' · ' + sf.sub_industry : '') },
+    { label: 'Location',      val: sf.location },
+  ];
+
+  el.innerHTML = `
+    <div class="sf-card">
+      <div class="sf-card-header">
+        <span class="sf-badge">⚡ Salesforce</span>
+        <span class="sf-status-chip ${chipClass}">${esc(status)}</span>
+        ${suppressHtml}
+      </div>
+      <div class="sf-grid">
+        ${fields.map(f => `
+          <div class="sf-field">
+            <div class="sf-field-label">${f.label}</div>
+            <div class="sf-field-val ${f.val ? '' : 'empty'}">${f.val ? esc(f.val) : '—'}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
 }
 
 function renderCoInfoStrip(company, domain, info) {
@@ -1043,55 +1073,63 @@ async function fetchCompanyInfo(company, domain) {
 function renderInsights(d) {
   const block = document.getElementById('insightBlock');
   const found = d.signals.filter(s => s.found);
-  if (!found.length) { block.style.display = 'none'; return; }
+  if (!found.length && !d.sf_data) { block.style.display = 'none'; return; }
 
-  // Summary
+  // Build summary
   const topPos = found.filter(s => s.type === 'positive').slice(0, 3).map(s => fmtName(s.name).toLowerCase());
   const topNeg = found.filter(s => s.type === 'negative').slice(0, 2).map(s => fmtName(s.name).toLowerCase());
-  let summary = `<strong>${esc(d.company)}</strong> shows <strong>${esc(d.intent_level)}</strong> buying intent`;
-  if (d.total_score > 0) summary += ` with a score of <strong>+${d.total_score}</strong>`;
-  else if (d.total_score < 0) summary += ` with a score of <strong>${d.total_score}</strong>`;
-  summary += '.';
-  if (topPos.length) summary += ` Key positive signals include ${topPos.join(', ')}.`;
-  if (topNeg.length) summary += ` Risk signals: ${topNeg.join(', ')}.`;
+
+  let summary = `<strong>${esc(d.company)}</strong> `;
+  if (d.sf_data) {
+    const status = d.sf_data.account_status || '';
+    summary += `is in Salesforce with status <strong>${esc(status)}</strong>`;
+    if (d.sf_data.bd_owner) summary += `, BD owner <strong>${esc(d.sf_data.bd_owner)}</strong>`;
+    summary += '. ';
+    if (d.sf_data.suppression_reason) {
+      summary += `<strong style="color:var(--orange)">Note: account is suppressed (${esc(d.sf_data.suppression_reason)}).</strong> `;
+    }
+  } else {
+    summary += 'is not currently in Salesforce. ';
+  }
+  if (topPos.length) summary += `Active positive signals: ${topPos.join(', ')}. `;
+  if (topNeg.length) summary += `Risk signals detected: ${topNeg.join(', ')}. `;
+  if (!found.length) summary += 'No buying signals detected in public data at this time.';
 
   // BD Recommendations
   const recs = [];
   const hasSignal = name => found.some(s => s.name === name);
+  const sf = d.sf_data;
 
-  if (hasSignal('leadership_change') || hasSignal('internal_promotion')) {
-    recs.push('New leadership is in place — incoming leaders often re-evaluate vendors, making this a prime window to get in front of them.');
-  }
-  if (hasSignal('erp_crm_migration')) {
-    recs.push('An active ERP/CRM migration signals their stack is open for change — lead with how your product fits into or simplifies that transition.');
-  }
-  if (hasSignal('hiring_activity')) {
-    recs.push('They are growing fast — pitch around scaling efficiently without adding headcount.');
-  }
-  if (hasSignal('ipo_preparation') || hasSignal('ma_activity')) {
-    recs.push('IPO prep or M&A creates operational pressure — emphasize visibility, reporting, and process standardization.');
-  }
-  if (hasSignal('geographic_expansion')) {
-    recs.push('They are expanding into new markets — highlight how your product supports multi-region operations.');
-  }
-  if (hasSignal('tech_stack_change')) {
-    recs.push('Their tech stack is shifting — position your product as a natural complement to what they are adopting.');
-  }
-  if (hasSignal('operational_pain')) {
-    recs.push('Operational pain signals are present — open with a diagnostic question about their current process.');
-  }
-  if (hasSignal('layoffs') || hasSignal('budget_cuts')) {
-    recs.push('Budget pressure is evident — lead with ROI and tool consolidation rather than new spend.');
-  }
-  if (!recs.length) {
-    if (d.intent_level === 'Strong Buyer' || d.intent_level === 'Potential Buyer') {
-      recs.push('Strong signals detected — reach out now with a pitch tied to their recent activity.');
-    } else {
-      recs.push('No strong triggers right now — consider a nurture approach and revisit in 30–60 days.');
+  if (sf && sf.suppression_reason) {
+    recs.push(`This account is suppressed — confirm with ${sf.account_owner || 'the account owner'} before any outreach.`);
+  } else if (sf && sf.account_status && sf.account_status.toLowerCase().includes('customer')) {
+    recs.push(`This is an existing customer — focus on expansion or upsell opportunities rather than a cold pitch.`);
+  } else {
+    if (hasSignal('leadership_change') || hasSignal('internal_promotion')) {
+      recs.push('New leadership is in place — incoming leaders often re-evaluate vendors, making this a prime window to get in front of them.');
+    }
+    if (hasSignal('erp_crm_migration')) {
+      recs.push('An active ERP/CRM migration signals their stack is open for change — lead with how your product fits into or simplifies that transition.');
+    }
+    if (hasSignal('hiring_activity')) {
+      recs.push('They are growing fast — pitch around scaling efficiently without adding headcount.');
+    }
+    if (hasSignal('ipo_preparation') || hasSignal('ma_activity')) {
+      recs.push('IPO prep or M&A creates operational pressure — emphasize visibility, reporting, and process standardization.');
+    }
+    if (hasSignal('geographic_expansion')) {
+      recs.push('They are expanding into new markets — highlight how your product supports multi-region operations.');
+    }
+    if (hasSignal('operational_pain')) {
+      recs.push('Operational pain signals are present — open with a diagnostic question about their current process.');
+    }
+    if (hasSignal('layoffs') || hasSignal('budget_cuts')) {
+      recs.push('Budget pressure is evident — lead with ROI and tool consolidation rather than new spend.');
+    }
+    if (!recs.length) {
+      recs.push(found.length ? 'Signals detected — reach out with a pitch tied to their recent activity.' : 'No strong triggers right now — consider a nurture approach and revisit in 30–60 days.');
     }
   }
-  // Cap at 2 most relevant sentences
-  const topRecs = recs.slice(0, 2);
 
   block.style.display = 'flex';
   block.innerHTML = `
@@ -1101,7 +1139,7 @@ function renderInsights(d) {
     </div>
     <div class="insight-section">
       <div class="insight-label">How BD Should Reach Out</div>
-      <div class="insight-text">${esc(topRecs.join(' '))}</div>
+      <div class="insight-text">${esc(recs.slice(0,2).join(' '))}</div>
     </div>`;
 }
 
@@ -1139,7 +1177,6 @@ function renderSignals(signals, filter) {
         <div class="sdetail">${esc(s.detail)}</div>
       </div>
       <div class="smeta">
-        <span class="scontrib ${contribClass}">${contrib}</span>
         ${hasEvidence ? '<span class="chevron">▼</span>' : ''}
       </div>`;
     body.appendChild(row);
