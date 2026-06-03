@@ -870,7 +870,10 @@ function startAnalysis() {
     }
   });
 
+  let _resultReceived = false;
+
   es.addEventListener('result', e => {
+    _resultReceived = true;
     es.close();
     document.getElementById('progBar').style.width = '100%';
     document.getElementById('prog-pct').textContent = '100%';
@@ -878,7 +881,13 @@ function startAnalysis() {
     document.getElementById('prog-title-text').textContent = 'Analysis complete';
     setStatus('ready', 'Ready');
     document.getElementById('btn-analyze').disabled = false;
-    renderResult(JSON.parse(e.data));
+    try {
+      renderResult(JSON.parse(e.data));
+    } catch(err) {
+      console.error('renderResult failed:', err);
+      document.getElementById('prog-title-text').textContent = 'Display error — please retry';
+      showToast('Something went wrong rendering the results. Please try again.');
+    }
   });
 
   es.addEventListener('error_event', e => {
@@ -896,8 +905,9 @@ function startAnalysis() {
   });
 
   es.onerror = () => {
+    if (_resultReceived) return; // result already rendered successfully — ignore connection close
     es.close();
-    document.getElementById('prog-title-text').textContent = 'Connection error — please retry';
+    document.getElementById('prog-title-text').textContent = 'Connection interrupted — please retry';
     document.getElementById('miniSpin').style.display = 'none';
     setStatus('ready', 'Ready');
     document.getElementById('btn-analyze').disabled = false;

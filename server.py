@@ -282,7 +282,15 @@ async def _stream_analysis(company: str, domain: str, selected_signals: set[str]
     for i, (key, label, collector_fn) in enumerate(active_collectors):
         yield send("progress", {"step": i + 1, "key": key, "label": label, "status": "running"})
         try:
-            signals = await asyncio.to_thread(collector_fn, company, domain)
+            # Run collector while sending SSE keep-alive comments every 8s so
+            # Railway's 30-second idle timeout never fires during a slow collector.
+            collector_task = asyncio.create_task(asyncio.to_thread(collector_fn, company, domain))
+            while not collector_task.done():
+                try:
+                    await asyncio.wait_for(asyncio.shield(collector_task), timeout=8)
+                except asyncio.TimeoutError:
+                    yield ": keep-alive\n\n"  # SSE comment — invisible to client, keeps connection alive
+            signals = await collector_task
             all_signals.extend(signals)
             found_count = sum(1 for s in signals if s.found)
             yield send("progress", {
