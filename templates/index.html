@@ -207,6 +207,8 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
 .sf-card{padding:18px 28px;border-bottom:1px solid var(--line);background:var(--white)}
 .sf-card-header{display:flex;align-items:center;gap:9px;margin-bottom:13px}
 .sf-title{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink3)}
+.sf-record-link{display:inline-flex;align-items:center;text-decoration:none;color:var(--ink3);transition:color .15s}
+.sf-record-link:hover{color:var(--blue)}
 .sf-link-icon{color:var(--ink3);opacity:.5;cursor:pointer;transition:opacity .15s;text-decoration:none}
 .sf-link-icon:hover{opacity:1}
 .sf-not-found{font-size:13px;color:var(--ink3);font-style:italic}
@@ -1003,8 +1005,10 @@ function renderSFCard(sf) {
   el.innerHTML = `
     <div class="sf-card">
       <div class="sf-card-header">
-        <span class="sf-title">Salesforce record</span>
-        <svg class="sf-link-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        <a class="sf-title sf-record-link" href="https://impactanalytics2021.lightning.force.com/lightning/r/Account/${esc(sf.account_id)}/view" target="_blank" rel="noopener">
+          Salesforce record
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px;opacity:.6"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
       </div>
       <div class="sf-grid">
         ${fields.map(f => `
