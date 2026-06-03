@@ -99,16 +99,30 @@ def _domain_slug(domain: str) -> str:
     return re.sub(r"[^a-z0-9]", "", host)  # remove remaining punctuation (hyphens etc.)
 
 
+def _normalize_company_name(company: str) -> str:
+    """Strip apostrophes and similar punctuation that corrupt tokenization (e.g. Macy's → Macys)."""
+    return re.sub(r"[`'''‘’ʼ]", "", company)
+
+
 def _validate_company(company: str, domain: str) -> bool:
     """
     Stage 1 (instant): token-exact match between company name and domain slug.
       e.g. tokens("Nike Inc") = ["nike"] must equal domain_slug("nike.com") = "nike"  ✓
-           tokens("Salesforc") = ["salesforc"] ≠ "salesforce"  → fail → Stage 2
+           tokens("Macy's")   → normalize → "Macys" → ["macys"] == "macys"             ✓
     Stage 2 (network): homepage meta tags contain every company token as a whole word.
+
+    If company name is empty we skip name validation entirely and rely solely on the domain.
     """
     try:
-        tokens = _name_tokens(company)
         slug = _domain_slug(domain)
+
+        # If no company name, only a domain — skip name validation
+        if not company or not company.strip():
+            return bool(slug)  # valid as long as we have a domain slug
+
+        # Normalize apostrophes etc. before tokenizing so "Macy's" → "macys" matches "macys"
+        normalized = _normalize_company_name(company)
+        tokens = _name_tokens(normalized)
 
         if not tokens or not slug:
             return True  # can't validate — let it through
@@ -129,7 +143,8 @@ def _validate_company(company: str, domain: str) -> bool:
                 allow_redirects=True,
             )
             if resp.status_code >= 400:
-                return False
+                # Many sites return 4xx for bot traffic — can't confirm mismatch, let it through
+                return True
 
             from bs4 import BeautifulSoup
             soup = BeautifulSoup(resp.text[:60_000], "lxml")
@@ -337,10 +352,15 @@ def _clean_domain(url: str) -> str:
 
 
 @app.get("/analyze")
-async def analyze(company: str, domain: str | None = None, signals: str | None = None):
+async def analyze(company: str = "", domain: str | None = None, signals: str | None = None):
     # Normalize company name: title-case so "nike" → "Nike", "microsoft corp" → "Microsoft Corp"
     company = company.strip().title()
     inferred_domain = _clean_domain(domain) if domain else f"https://www.{company.lower().replace(' ', '')}.com"
+
+    # If company name was left blank, derive a display name from the domain slug
+    if not company and inferred_domain:
+        slug = _domain_slug(inferred_domain)
+        company = slug.capitalize() if slug else inferred_domain
     selected = set(signals.split(",")) if signals else None
 
     # Log this search to searches.json

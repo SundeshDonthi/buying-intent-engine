@@ -441,7 +441,7 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
   <!-- Scan form -->
   <div class="card pad scancard" id="scanCard">
     <div class="row2">
-      <div><label class="fld">Company name</label><input class="acct" id="inp-company" placeholder="e.g. Williams-Sonoma" autocomplete="off"></div>
+      <div><label class="fld">Company name <span style="font-weight:400;color:var(--ink3)">(optional)</span></label><input class="acct" id="inp-company" placeholder="e.g. Williams-Sonoma" autocomplete="off"></div>
       <div>
         <label class="fld">Website <span class="fld-required">*</span></label>
         <input class="acct" id="inp-domain" placeholder="e.g. https://www.williams-sonoma.com" autocomplete="off">
@@ -798,15 +798,16 @@ const STEP_META = {
 // ── Analysis ───────────────────────────────────────────────────────────────
 function startAnalysis() {
   const rawCompany = document.getElementById('inp-company').value.trim();
-  if (!rawCompany) { document.getElementById('inp-company').focus(); return; }
-  // Normalize to title case so "nike" → "Nike" in the UI immediately
-  const company = rawCompany.replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
-  document.getElementById('inp-company').value = company;
+  // Normalize to title case so "nike" → "Nike" in the UI immediately (if provided)
+  const company = rawCompany
+    ? rawCompany.replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    : '';
+  if (company) document.getElementById('inp-company').value = company;
 
   const domainInput = document.getElementById('inp-domain');
   const domain = domainInput.value.trim();
   const domainErr = document.getElementById('domain-err');
-  // Domain is required
+  // Domain is required (company name is optional)
   if (!domain) {
     domainInput.classList.add('invalid');
     domainErr.classList.add('show');
@@ -816,6 +817,7 @@ function startAnalysis() {
   domainInput.classList.remove('invalid');
   domainErr.classList.remove('show');
 
+  const displayName = company || domain;
   setStatus('working', 'Scanning…');
   document.getElementById('btn-analyze').disabled = true;
   document.getElementById('progressArea').classList.remove('hide');
@@ -823,14 +825,15 @@ function startAnalysis() {
   document.getElementById('progRows').innerHTML = '';
   document.getElementById('progBar').style.width = '0%';
   document.getElementById('prog-pct').textContent = '0%';
-  document.getElementById('prog-title-text').textContent = `Analyzing "${company}"…`;
+  document.getElementById('prog-title-text').textContent = `Analyzing "${displayName}"…`;
   document.getElementById('miniSpin').style.display = '';
 
   let _totalSteps = 5;
   let _doneSteps = 0;
 
-  const params = new URLSearchParams({ company });
-  if (domain) params.append('domain', domain);
+  const params = new URLSearchParams();
+  if (company) params.append('company', company);
+  params.append('domain', domain);
   const es = new EventSource(`/analyze?${params}`);
 
   es.addEventListener('start', e => {
