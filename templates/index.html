@@ -1143,27 +1143,36 @@ function renderInsights(d) {
   // BD Recommendation
   const recs = [];
   const hasSignal = name => found.some(s => s.name === name);
+  // Expand summary with per-signal context
+  const sigDetails = {
+    leadership_change:    'new leadership often re-evaluates existing vendors',
+    internal_promotion:   'an internal promotion signals structural change',
+    erp_crm_migration:    'an active platform migration means their stack is in flux',
+    hiring_activity:      'active hiring signals growth and technology investment',
+    geographic_expansion: 'geographic expansion points to increasing operational complexity',
+    ipo_preparation:      'IPO preparation creates urgency around scalable systems',
+    ma_activity:          'M&A activity typically triggers a technology and vendor review',
+    operational_pain:     'operational pain signals a pressing need for better tooling',
+    tech_stack_change:    'their tech stack is actively evolving',
+    layoffs:              'recent layoffs suggest budget constraints and headcount pressure',
+    budget_cuts:          'budget cuts signal a focus on cost reduction and consolidation',
+    facility_closures:    'facility closures indicate operational contraction',
+    reorganization:       'ongoing reorganization may affect technology priorities',
+  };
+
+  const posSigs = found.filter(s => s.type === 'positive');
+  const negSigs = found.filter(s => s.type === 'negative');
+
+  if (posSigs.length) {
+    const details = posSigs.slice(0,3).map(s => sigDetails[s.name]).filter(Boolean);
+    if (details.length) summary += `On the positive side, ${details.join('; ')}. `;
+  }
+  if (negSigs.length) {
+    const details = negSigs.slice(0,2).map(s => sigDetails[s.name]).filter(Boolean);
+    if (details.length) summary += `Risk factors to note: ${details.join('; ')}. `;
+  }
   if (sf && sf.suppression_reason) {
-    recs.push(`This account is suppressed — confirm with ${sf.account_owner || 'the account owner'} before any outreach.`);
-  } else if (sf && sf.account_status && sf.account_status.toLowerCase().includes('customer')) {
-    recs.push('This is an existing customer — focus on expansion or upsell conversations rather than a cold introduction.');
-  } else {
-    if (hasSignal('leadership_change') || hasSignal('internal_promotion'))
-      recs.push('New leadership is in place — incoming leaders often re-evaluate vendors, making this a prime window.');
-    if (hasSignal('erp_crm_migration'))
-      recs.push('An active ERP/CRM migration signals their stack is open for change — lead with how your product fits into that transition.');
-    if (hasSignal('hiring_activity'))
-      recs.push('They are growing fast — pitch around scaling efficiently without adding headcount.');
-    if (hasSignal('ipo_preparation') || hasSignal('ma_activity'))
-      recs.push('IPO prep or M&A creates operational pressure — emphasize visibility, reporting, and process standardization.');
-    if (hasSignal('geographic_expansion'))
-      recs.push('They are expanding into new markets — highlight multi-region operations support.');
-    if (hasSignal('operational_pain'))
-      recs.push('Operational pain signals are present — open with a diagnostic question about their current process.');
-    if (hasSignal('layoffs') || hasSignal('budget_cuts'))
-      recs.push('Budget pressure is evident — lead with ROI and tool consolidation rather than new spend.');
-    if (!recs.length)
-      recs.push(found.length ? 'Signals detected — reach out with a pitch tied to their recent activity.' : 'No strong triggers right now — consider a nurture approach and revisit in 30–60 days.');
+    summary += `<strong style="color:var(--orange)">This account is currently suppressed — confirm with ${sf.account_owner || 'the account owner'} before any outreach.</strong>`;
   }
 
   block.style.display = 'flex';
@@ -1172,10 +1181,6 @@ function renderInsights(d) {
     <div class="insight-section">
       <div class="insight-label">Summary</div>
       <div class="insight-text">${summary}</div>
-    </div>
-    <div class="insight-section">
-      <div class="insight-label">How BD should reach out</div>
-      <div class="insight-text">${esc(recs.slice(0,2).join(' '))}</div>
     </div>
     <div class="dlbar" style="margin:0 -28px -18px;border-top:1px solid var(--line);border-bottom:none;border-radius:0">
       <span class="dl-l">Export</span>
