@@ -183,29 +183,15 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
 .reshead-txt .domlink a{color:inherit;text-decoration:none}
 .reshead-txt .domlink a:hover{text-decoration:underline}
 
-/* ── score summary ── */
-.summary{padding:26px 28px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,var(--bg2),#fff)}
-.scoreblock{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
-.ring{position:relative;width:108px;height:108px;flex:none}
-.ring svg{width:108px;height:108px;transform:rotate(-90deg);filter:drop-shadow(0 4px 12px rgba(38,76,215,.25))}
-.ring-bg{fill:none;stroke:var(--line);stroke-width:8}
-.ring-fg{fill:none;stroke:url(#ringgrad);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset 1.2s var(--ease)}
-.ring-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
-.ring-num span:first-child{font-family:var(--serif);font-size:34px;font-weight:500;background:linear-gradient(120deg,var(--blue),var(--blue-l));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.ring-den{font-size:10.5px;color:var(--ink3);font-weight:600;margin-top:3px}
-.scoremeta{flex:1;min-width:180px}
-.scorelabel{font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--ink3);margin-bottom:10px}
-.intent-badge{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;padding:7px 14px;border-radius:999px;margin-bottom:12px}
-.intent-badge.strong-buyer{background:var(--green-bg);color:var(--green)}
-.intent-badge.potential-buyer{background:var(--blue-soft);color:var(--blue)}
-.intent-badge.neutral{background:var(--bg);color:var(--ink2);border:1px solid var(--line2)}
-.intent-badge.poor-fit{background:var(--orange-bg);color:var(--orange)}
-.intent-badge.disqualified{background:var(--red-bg);color:var(--red)}
-.breakdown{display:flex;gap:8px;flex-wrap:wrap}
-.bd{font-size:12px;font-weight:600;padding:6px 13px;border-radius:999px}
-.bd.pos{background:var(--green-bg);color:var(--green)}
-.bd.neg{background:var(--red-bg);color:var(--red)}
-.bd.neu{background:var(--bg);color:var(--ink2)}
+/* ── account intelligence ── */
+.acct-intel{padding:18px 28px;border-bottom:1px solid var(--line);background:var(--white)}
+.acct-intel-header{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink3);margin-bottom:12px}
+.acct-intel-header svg{opacity:.5}
+.intel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:600px){.intel-grid{grid-template-columns:1fr}}
+.intel-card{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:13px 15px}
+.intel-card-label{font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--ink3);margin-bottom:6px}
+.intel-card-val{font-size:13px;font-weight:500;color:var(--ink);line-height:1.5}
 
 /* ── company info strip ── */
 .co-info-strip{display:flex;gap:0;border-bottom:1px solid var(--line);background:var(--white);overflow-x:auto}
@@ -218,35 +204,35 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
 .co-info-val.loading{color:var(--ink3);font-weight:400;font-style:italic}
 
 /* ── Salesforce card ── */
-.sf-card{padding:22px 28px;border-bottom:1px solid var(--line);background:var(--white)}
-.sf-card-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-.sf-badge{display:inline-flex;align-items:center;gap:6px;background:#00A1E0;color:#fff;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:4px 10px;border-radius:6px}
-.sf-not-found{font-size:13.5px;color:var(--ink3);font-style:italic}
-.sf-status-chip{font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px}
-.sf-status-chip.active{background:var(--green-bg);color:var(--green)}
-.sf-status-chip.closed{background:var(--red-bg);color:var(--red)}
-.sf-status-chip.other{background:var(--bg);color:var(--ink2);border:1px solid var(--line2)}
-.sf-suppressed{display:inline-flex;align-items:center;gap:6px;background:var(--orange-bg);color:var(--orange);font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px}
-.sf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
-@media(max-width:700px){.sf-grid{grid-template-columns:repeat(2,1fr)}}
-.sf-field{padding:12px 16px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
-.sf-field:nth-child(4n){border-right:none}
-.sf-field:nth-last-child(-n+4){border-bottom:none}
-@media(max-width:700px){.sf-field:nth-child(2n){border-right:none}.sf-field:nth-last-child(-n+2){border-bottom:none}.sf-field:nth-child(4n){border-right:1px solid var(--line)}.sf-field:nth-child(odd){border-right:1px solid var(--line)}}
-.sf-field-label{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink3);margin-bottom:4px}
-.sf-field-val{font-size:13px;font-weight:600;color:var(--ink);line-height:1.35}
+.sf-card{padding:18px 28px;border-bottom:1px solid var(--line);background:var(--white)}
+.sf-card-header{display:flex;align-items:center;gap:9px;margin-bottom:13px}
+.sf-title{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink3)}
+.sf-link-icon{color:var(--ink3);opacity:.5;cursor:pointer;transition:opacity .15s;text-decoration:none}
+.sf-link-icon:hover{opacity:1}
+.sf-not-found{font-size:13px;color:var(--ink3);font-style:italic}
+.sf-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+@media(max-width:600px){.sf-grid{grid-template-columns:1fr 1fr}}
+.sf-field{padding:10px 0;border-bottom:1px solid var(--line)}
+.sf-field:nth-child(3n+1){padding-right:20px}
+.sf-field:nth-child(3n+2){padding:10px 20px;border-left:1px solid var(--line);border-right:1px solid var(--line)}
+.sf-field:nth-child(3n){padding-left:20px}
+.sf-field-label{font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--ink3);margin-bottom:3px}
+.sf-field-val{font-size:13px;font-weight:600;color:var(--ink);line-height:1.3}
 .sf-field-val.empty{color:var(--ink3);font-weight:400;font-style:italic}
+.sf-no-suppression{font-size:12px;color:var(--ink3);margin-top:10px;font-style:italic}
+.sf-suppression-block{margin-top:10px;background:var(--orange-bg);border:1px solid rgba(255,111,28,.25);border-radius:8px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:16px}
+.sf-suppression-field{}
+.sf-suppression-label{font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--orange);margin-bottom:2px}
+.sf-suppression-val{font-size:13px;font-weight:700;color:var(--orange)}
 
-/* ── ai summary + BD rec ── */
-.insight-block{padding:22px 28px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#f7f9ff,var(--white));display:flex;flex-direction:column;gap:16px}
-.insight-section{display:flex;flex-direction:column;gap:8px}
-.insight-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);display:flex;align-items:center;gap:6px}
-.insight-label::after{content:"";flex:1;height:1px;background:var(--line)}
+/* ── insight block ── */
+.insight-block{padding:18px 28px;border-bottom:1px solid var(--line);background:var(--white);display:flex;flex-direction:column;gap:14px}
+.sig-line{font-size:13px;font-weight:500;color:var(--ink2);background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:9px 13px;line-height:1.5}
+.sig-line strong{color:var(--ink);font-weight:700}
+.insight-section{display:flex;flex-direction:column;gap:6px}
+.insight-label{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink3)}
 .insight-text{font-size:13.5px;color:var(--ink);line-height:1.65}
 .insight-text strong{color:var(--ink);font-weight:700}
-.bd-recs{display:flex;flex-direction:column;gap:8px}
-.bd-rec-item{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--ink);line-height:1.55}
-.bd-rec-dot{width:7px;height:7px;border-radius:50%;background:var(--blue);flex:none;margin-top:5px}
 
 /* ── filters ── */
 .filters{display:flex;gap:7px;flex-wrap:wrap;padding:16px 28px;border-bottom:1px solid var(--line);background:var(--white)}
@@ -291,12 +277,14 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
 .ev-text a:hover{text-decoration:underline}
 
 /* ── export bar ── */
-.dlbar{display:flex;align-items:center;flex-wrap:wrap;gap:9px;padding:14px 28px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--bg2)}
-.dl-l{font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--ink3);margin-right:4px}
-.dlbtn{display:inline-flex;align-items:center;gap:7px;font-family:var(--sans);font-weight:600;font-size:13px;color:var(--ink);background:var(--white);border:1px solid var(--line2);padding:8px 14px;border-radius:999px;cursor:pointer;transition:border-color .18s,background .18s,transform .18s var(--spring)}
-.dlbtn svg{width:15px;height:15px;color:var(--blue)}
+.dlbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:12px 28px;border-bottom:1px solid var(--line);background:var(--bg2)}
+.dl-l{font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--ink3);margin-right:2px}
+.dlbtn{display:inline-flex;align-items:center;gap:6px;font-family:var(--sans);font-weight:600;font-size:12.5px;color:var(--ink);background:var(--white);border:1px solid var(--line2);padding:6px 12px;border-radius:999px;cursor:pointer;transition:border-color .18s,background .18s,transform .18s var(--spring)}
+.dlbtn svg{width:13px;height:13px;color:var(--blue)}
 .dlbtn:hover{border-color:var(--blue-l);background:var(--blue-soft);transform:translateY(-1px)}
 .dlbtn:disabled{opacity:.5;cursor:wait;transform:none}
+.report-inline{margin-left:auto;display:inline-flex;align-items:center;gap:5px;background:none;border:none;padding:0;font-size:12.5px;font-weight:600;color:var(--ink3);cursor:pointer;font-family:var(--sans);transition:color .15s}
+.report-inline:hover{color:var(--red)}
 
 /* ── new search button ── */
 .btn-new{margin-top:20px;background:none;border:1.5px solid var(--line2);color:var(--ink2);border-radius:10px;padding:10px 20px;font-size:13.5px;cursor:pointer;transition:all .15s;font-family:var(--sans);font-weight:600}
@@ -487,26 +475,12 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
       <div class="reshead" id="reshead"></div>
       <!-- company info strip -->
       <div class="co-info-strip" id="coInfoStrip"></div>
+      <!-- account intelligence -->
+      <div id="acctIntel"></div>
       <!-- Salesforce card -->
       <div id="sfCard"></div>
-      <!-- insights -->
+      <!-- insights + export -->
       <div class="insight-block" id="insightBlock" style="display:none"></div>
-      <!-- export bar -->
-      <div class="dlbar">
-        <span class="dl-l">Export</span>
-        <button class="dlbtn" id="dlPdf" onclick="exportPDF()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-          PDF
-        </button>
-        <button class="dlbtn" id="dlDocx" onclick="exportWord()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-          Word
-        </button>
-        <button class="dlbtn" id="dlShot" onclick="exportScreenshot()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-          Screenshot
-        </button>
-      </div>
       <!-- filters -->
       <div class="filters" id="sigFilters">
         <button class="on" onclick="filterSigs('all',this)">All</button>
@@ -517,13 +491,6 @@ input.acct:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-soft)}
       </div>
       <!-- signals -->
       <div class="signals-body" id="sigBody"></div>
-    </div>
-    <div class="report-bar">
-      <span class="report-prompt">Results look off?</span>
-      <button class="report-btn" onclick="openReport()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
-        Report an inaccuracy
-      </button>
     </div>
     <button class="btn-new" onclick="resetUI()">← New search</button>
   </div>
@@ -968,18 +935,21 @@ function renderResult(d) {
       <div class="domlink">🌐 <a href="${esc(d.domain)}" target="_blank">${cleanDomain(d.domain)}</a></div>
     </div>`;
 
+  // Account intelligence (from signals)
+  renderAccountIntel(d);
+
   // Salesforce card
   renderSFCard(d.sf_data);
+
+  // Insights + export
+  renderInsights(d);
 
   renderSignals(allSignals, currentFilter);
   document.getElementById('resultArea').classList.remove('hide');
 
   // Show company info strip with loading state, then fetch
-  renderCoInfoStrip(d.company, d.domain, null); // null = show loading spinners
-  fetchCompanyInfo(d.company, d.domain);        // resolves and re-renders with real data
-
-  // Render insights
-  renderInsights(d);
+  renderCoInfoStrip(d.company, d.domain, null);
+  fetchCompanyInfo(d.company, d.domain);
 }
 
 function renderSFCard(sf) {
@@ -988,48 +958,117 @@ function renderSFCard(sf) {
     el.innerHTML = `
       <div class="sf-card">
         <div class="sf-card-header">
-          <span class="sf-badge">⚡ Salesforce</span>
-          <span class="sf-not-found">Not found in Salesforce — this may be a new prospect</span>
+          <span class="sf-title">Salesforce record</span>
         </div>
+        <span class="sf-not-found">Not found in Salesforce — this may be a new prospect</span>
       </div>`;
     return;
   }
 
-  // Status chip
-  const status = sf.account_status || '';
-  const statusLower = status.toLowerCase();
-  const chipClass = statusLower.includes('active') || statusLower.includes('customer') ? 'active'
-    : statusLower.includes('lost') || statusLower.includes('dead') || statusLower.includes('closed') ? 'closed'
-    : 'other';
-
-  // Suppression warning
-  const suppressHtml = sf.suppression_reason
-    ? `<span class="sf-suppressed">⚠ Suppressed: ${esc(sf.suppression_reason)}${sf.suppression_date ? ' · ' + esc(sf.suppression_date) : ''}</span>`
-    : '';
-
+  // 6 core fields in 3-col × 2-row grid
   const fields = [
-    { label: 'Account ID',    val: sf.account_id },
-    { label: 'Account Status', val: sf.account_status },
-    { label: 'Account Owner', val: sf.account_owner },
-    { label: 'BD Owner',      val: sf.bd_owner },
-    { label: 'BD Priority Date', val: sf.bd_priority_date },
-    { label: 'Annual Revenue', val: sf.annual_revenue },
-    { label: 'Industry',      val: sf.industry + (sf.sub_industry ? ' · ' + sf.sub_industry : '') },
-    { label: 'Location',      val: sf.location },
+    { label: 'Account ID',              val: sf.account_id },
+    { label: 'Account status',          val: sf.account_status },
+    { label: 'Account owner',           val: sf.account_owner },
+    { label: 'Business Development Owner (Account)', val: sf.bd_owner },
+    { label: 'BD priority date',        val: sf.bd_priority_date },
+    { label: 'Annual revenue',          val: sf.annual_revenue },
   ];
+
+  // Conditional suppression block
+  const hasSuppression = sf.suppression_reason || sf.suppression_date;
+  const suppressionHtml = hasSuppression
+    ? `<div class="sf-suppression-block">
+        ${sf.suppression_reason ? `<div class="sf-suppression-field">
+          <div class="sf-suppression-label">Target suppression reason</div>
+          <div class="sf-suppression-val">${esc(sf.suppression_reason)}</div>
+        </div>` : ''}
+        ${sf.suppression_date ? `<div class="sf-suppression-field">
+          <div class="sf-suppression-label">Target suppression date</div>
+          <div class="sf-suppression-val">${esc(sf.suppression_date)}</div>
+        </div>` : ''}
+      </div>`
+    : `<div class="sf-no-suppression">No suppression on this account, so those two fields are hidden.</div>`;
 
   el.innerHTML = `
     <div class="sf-card">
       <div class="sf-card-header">
-        <span class="sf-badge">⚡ Salesforce</span>
-        <span class="sf-status-chip ${chipClass}">${esc(status)}</span>
-        ${suppressHtml}
+        <span class="sf-title">Salesforce record</span>
+        <svg class="sf-link-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
       </div>
       <div class="sf-grid">
         ${fields.map(f => `
           <div class="sf-field">
             <div class="sf-field-label">${f.label}</div>
             <div class="sf-field-val ${f.val ? '' : 'empty'}">${f.val ? esc(f.val) : '—'}</div>
+          </div>`).join('')}
+      </div>
+      ${suppressionHtml}
+    </div>`;
+}
+
+function renderAccountIntel(d) {
+  const el = document.getElementById('acctIntel');
+  const found = d.signals.filter(s => s.found);
+  if (!found.length) { el.innerHTML = ''; return; }
+
+  // Card 1: detected tech stack or top positive signal
+  const techSig = found.find(s => s.name === 'tech_stack_change');
+  const erpSig  = found.find(s => s.name === 'erp_crm_migration');
+  let card1Label = 'Key activity';
+  let card1Val   = '';
+  if (erpSig)  { card1Label = 'Platform migration'; card1Val = erpSig.detail; }
+  else if (techSig) { card1Label = 'Tech stack'; card1Val = techSig.detail; }
+  else {
+    const top = found.filter(s => s.type === 'positive')[0];
+    if (top) { card1Label = fmtName(top.name); card1Val = top.detail; }
+  }
+
+  // Card 2: operational scale / company context
+  const hireSig = found.find(s => s.name === 'hiring_activity');
+  const expSig  = found.find(s => s.name === 'geographic_expansion');
+  const maSig   = found.find(s => s.name === 'ma_activity');
+  let card2Label = 'Growth signals';
+  let card2Val   = '';
+  if (maSig)   { card2Label = 'M&A activity'; card2Val = maSig.detail; }
+  else if (expSig)  { card2Label = 'Expansion'; card2Val = expSig.detail; }
+  else if (hireSig) { card2Label = 'Hiring activity'; card2Val = hireSig.detail; }
+  else {
+    const top = found.filter(s => s.type === 'positive')[1] || found[1];
+    if (top) { card2Label = fmtName(top.name); card2Val = top.detail; }
+  }
+
+  // Card 3: risk / pressure signals
+  const riskSig = found.filter(s => s.type === 'negative')[0];
+  const painSig = found.find(s => s.name === 'operational_pain');
+  let card3Label = 'Risk indicators';
+  let card3Val   = '';
+  if (painSig) { card3Label = 'Operational pressure'; card3Val = painSig.detail; }
+  else if (riskSig) { card3Label = fmtName(riskSig.name); card3Val = riskSig.detail; }
+  else {
+    const top = found.filter(s => s.type === 'neutral')[0];
+    if (top) { card3Label = fmtName(top.name); card3Val = top.detail; }
+  }
+
+  const cards = [
+    { label: card1Label, val: card1Val },
+    { label: card2Label, val: card2Val },
+    { label: card3Label, val: card3Val },
+  ].filter(c => c.val);
+
+  if (!cards.length) { el.innerHTML = ''; return; }
+
+  el.innerHTML = `
+    <div class="acct-intel">
+      <div class="acct-intel-header">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        Account Intelligence
+      </div>
+      <div class="intel-grid">
+        ${cards.map(c => `
+          <div class="intel-card">
+            <div class="intel-card-label">${esc(c.label)}</div>
+            <div class="intel-card-val">${esc(c.val)}</div>
           </div>`).join('')}
       </div>
     </div>`;
@@ -1073,73 +1112,89 @@ async function fetchCompanyInfo(company, domain) {
 function renderInsights(d) {
   const block = document.getElementById('insightBlock');
   const found = d.signals.filter(s => s.found);
-  if (!found.length && !d.sf_data) { block.style.display = 'none'; return; }
 
-  // Build summary
-  const topPos = found.filter(s => s.type === 'positive').slice(0, 3).map(s => fmtName(s.name).toLowerCase());
-  const topNeg = found.filter(s => s.type === 'negative').slice(0, 2).map(s => fmtName(s.name).toLowerCase());
+  // Compact signals line
+  const posNames = found.filter(s => s.type === 'positive').map(s => fmtName(s.name).toLowerCase());
+  const negNames = found.filter(s => s.type === 'negative').map(s => fmtName(s.name).toLowerCase());
+  let sigLine = '';
+  if (posNames.length) sigLine += `<strong>Detected signals:</strong> ${posNames.join(', ')}.`;
+  if (negNames.length) sigLine += ` <strong>Risk signals:</strong> ${negNames.join(', ')}.`;
+  if (!sigLine) sigLine = 'No signals detected in public data.';
 
-  let summary = `<strong>${esc(d.company)}</strong> `;
-  if (d.sf_data) {
-    const status = d.sf_data.account_status || '';
-    summary += `is in Salesforce with status <strong>${esc(status)}</strong>`;
-    if (d.sf_data.bd_owner) summary += `, BD owner <strong>${esc(d.sf_data.bd_owner)}</strong>`;
+  // Summary paragraph
+  const sf = d.sf_data;
+  let summary = '';
+  if (sf) {
+    const status = sf.account_status || '';
+    summary += `<strong>${esc(d.company)}</strong> is in Salesforce`;
+    if (status) summary += ` with status <strong>${esc(status)}</strong>`;
+    if (sf.bd_owner) summary += `, BD owner <strong>${esc(sf.bd_owner)}</strong>`;
     summary += '. ';
-    if (d.sf_data.suppression_reason) {
-      summary += `<strong style="color:var(--orange)">Note: account is suppressed (${esc(d.sf_data.suppression_reason)}).</strong> `;
+    if (sf.suppression_reason) {
+      summary += `<strong style="color:var(--orange)">Account is suppressed (${esc(sf.suppression_reason)}) — check before any outreach.</strong> `;
     }
   } else {
-    summary += 'is not currently in Salesforce. ';
+    summary += `<strong>${esc(d.company)}</strong> is not currently in Salesforce. `;
   }
-  if (topPos.length) summary += `Active positive signals: ${topPos.join(', ')}. `;
-  if (topNeg.length) summary += `Risk signals detected: ${topNeg.join(', ')}. `;
-  if (!found.length) summary += 'No buying signals detected in public data at this time.';
+  if (posNames.length) summary += `Positive signals include ${posNames.slice(0,3).join(', ')}. `;
+  if (negNames.length) summary += `Risk signals: ${negNames.slice(0,2).join(', ')}. `;
+  if (!found.length) summary += 'No buying signals were detected in public data at this time.';
 
-  // BD Recommendations
+  // BD Recommendation
   const recs = [];
   const hasSignal = name => found.some(s => s.name === name);
-  const sf = d.sf_data;
-
   if (sf && sf.suppression_reason) {
     recs.push(`This account is suppressed — confirm with ${sf.account_owner || 'the account owner'} before any outreach.`);
   } else if (sf && sf.account_status && sf.account_status.toLowerCase().includes('customer')) {
-    recs.push(`This is an existing customer — focus on expansion or upsell opportunities rather than a cold pitch.`);
+    recs.push('This is an existing customer — focus on expansion or upsell conversations rather than a cold introduction.');
   } else {
-    if (hasSignal('leadership_change') || hasSignal('internal_promotion')) {
-      recs.push('New leadership is in place — incoming leaders often re-evaluate vendors, making this a prime window to get in front of them.');
-    }
-    if (hasSignal('erp_crm_migration')) {
-      recs.push('An active ERP/CRM migration signals their stack is open for change — lead with how your product fits into or simplifies that transition.');
-    }
-    if (hasSignal('hiring_activity')) {
+    if (hasSignal('leadership_change') || hasSignal('internal_promotion'))
+      recs.push('New leadership is in place — incoming leaders often re-evaluate vendors, making this a prime window.');
+    if (hasSignal('erp_crm_migration'))
+      recs.push('An active ERP/CRM migration signals their stack is open for change — lead with how your product fits into that transition.');
+    if (hasSignal('hiring_activity'))
       recs.push('They are growing fast — pitch around scaling efficiently without adding headcount.');
-    }
-    if (hasSignal('ipo_preparation') || hasSignal('ma_activity')) {
+    if (hasSignal('ipo_preparation') || hasSignal('ma_activity'))
       recs.push('IPO prep or M&A creates operational pressure — emphasize visibility, reporting, and process standardization.');
-    }
-    if (hasSignal('geographic_expansion')) {
-      recs.push('They are expanding into new markets — highlight how your product supports multi-region operations.');
-    }
-    if (hasSignal('operational_pain')) {
+    if (hasSignal('geographic_expansion'))
+      recs.push('They are expanding into new markets — highlight multi-region operations support.');
+    if (hasSignal('operational_pain'))
       recs.push('Operational pain signals are present — open with a diagnostic question about their current process.');
-    }
-    if (hasSignal('layoffs') || hasSignal('budget_cuts')) {
+    if (hasSignal('layoffs') || hasSignal('budget_cuts'))
       recs.push('Budget pressure is evident — lead with ROI and tool consolidation rather than new spend.');
-    }
-    if (!recs.length) {
+    if (!recs.length)
       recs.push(found.length ? 'Signals detected — reach out with a pitch tied to their recent activity.' : 'No strong triggers right now — consider a nurture approach and revisit in 30–60 days.');
-    }
   }
 
   block.style.display = 'flex';
   block.innerHTML = `
+    <div class="sig-line">${sigLine}</div>
     <div class="insight-section">
       <div class="insight-label">Summary</div>
       <div class="insight-text">${summary}</div>
     </div>
     <div class="insight-section">
-      <div class="insight-label">How BD Should Reach Out</div>
+      <div class="insight-label">How BD should reach out</div>
       <div class="insight-text">${esc(recs.slice(0,2).join(' '))}</div>
+    </div>
+    <div class="dlbar" style="margin:0 -28px -18px;border-top:1px solid var(--line);border-bottom:none;border-radius:0">
+      <span class="dl-l">Export</span>
+      <button class="dlbtn" onclick="exportWord()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Word
+      </button>
+      <button class="dlbtn" onclick="exportPDF()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        PDF
+      </button>
+      <button class="dlbtn" onclick="exportScreenshot()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Screenshot
+      </button>
+      <button class="report-inline" onclick="openReport()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        Report an inaccuracy
+      </button>
     </div>`;
 }
 
