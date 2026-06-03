@@ -1096,7 +1096,6 @@ function renderCoInfoStrip(company, domain, info) {
   const fields = [
     { label: 'Company',      val: esc((info && info.name) || company) },
     { label: 'Industry',     val: pending ? loading : esc((info && info.industry) || '—') },
-    { label: 'Revenue',      val: pending ? loading : esc((info && info.revenue)  || '—') },
     { label: 'Headquarters', val: pending ? loading : esc((info && info.hq)       || '—') },
     { label: 'Website',      val: `<a href="${esc(domain)}" target="_blank">${esc(website)}</a>` },
   ];
