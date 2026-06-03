@@ -180,18 +180,24 @@ def _load_sf_data() -> dict:
         reader = csv.DictReader(io.StringIO("\n".join(lines[header_idx:])))
         domain_map: dict = {}
         name_map: dict = {}
+        skipped = 0
         for row in reader:
-            acct = row.get("Account Name", "").strip()
-            if not acct:
-                continue
-            website = row.get("Website", "").strip()
-            if website:
-                slug = _domain_slug(website)
-                if slug and slug not in domain_map:
-                    domain_map[slug] = row
-            name_key = "".join(_name_tokens(acct))
-            if name_key and name_key not in name_map:
-                name_map[name_key] = row
+            try:
+                # Use `or ""` to safely handle None values from short/malformed rows
+                acct = (row.get("Account Name") or "").strip()
+                if not acct:
+                    continue
+                website = (row.get("Website") or "").strip()
+                if website:
+                    slug = _domain_slug(website)
+                    if slug and slug not in domain_map:
+                        domain_map[slug] = row
+                name_key = "".join(_name_tokens(acct))
+                if name_key and name_key not in name_map:
+                    name_map[name_key] = row
+            except Exception:
+                skipped += 1  # skip corrupted rows silently
+        print(f"[SF] Loaded {len(domain_map)} domain entries, {len(name_map)} name entries, {skipped} rows skipped")
         with _sf_lock:
             _sf_cache["domain_map"] = domain_map
             _sf_cache["name_map"] = name_map
