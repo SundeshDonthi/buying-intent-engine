@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://unpkg.com/docx@9.0.3/build/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 <style>
 :root{
   --blue:#264CD7;--blue-d:#1C3AA8;--blue-l:#5C7BF0;--blue-soft:#EEF2FF;
@@ -1318,14 +1318,6 @@ async function exportPDF() {
   }
 
   const d = lastResult;
-  const intentColors = {
-    'Strong Buyer': '#1B7A4B', 'Potential Buyer': '#264CD7',
-    'Neutral': '#9A9A94', 'Poor Fit': '#FF6F1C', 'Disqualified': '#C0392B'
-  };
-  const intentBg = {
-    'Strong Buyer': '#E7F6EE', 'Potential Buyer': '#EEF2FF',
-    'Neutral': '#F4F4F6', 'Poor Fit': '#FFF1E8', 'Disqualified': '#FBEBE9'
-  };
 
   // ── Cover header ──────────────────────────────────────────────────────────
   doc.setFillColor('#264CD7');
@@ -1353,33 +1345,76 @@ async function exportPDF() {
   setFont(9, 'normal', '#9A9A94');
   doc.text(cleanDomain(d.domain), margin + 6, y + 19);
 
-  // intent badge
-  const iColor = intentColors[d.intent_level] || '#9A9A94';
-  const iBg    = intentBg[d.intent_level]    || '#F4F4F6';
-  const badgeW = 44, badgeH = 9;
-  rect(W - margin - badgeW - 6, y + 9, badgeW, badgeH, iBg);
-  setFont(8, 'bold', iColor);
-  doc.text(d.intent_level, W - margin - badgeW / 2 - 6, y + 15, {align:'center'});
+  // signal summary badge
+  const foundSigs = (d.signals || []).filter(s => s.found);
+  const posSigs = foundSigs.filter(s => s.type === 'positive').length;
+  const negSigs = foundSigs.filter(s => s.type === 'negative').length;
+  const badgeTxt = `${posSigs} positive · ${negSigs} risk signal${negSigs !== 1 ? 's' : ''}`;
+  setFont(8, 'normal', '#264CD7');
+  doc.text(badgeTxt, W - margin - 6, y + 15, {align:'right'});
   y += 36;
 
-  // ── Score row ─────────────────────────────────────────────────────────────
-  const boxW = (content_w - 6) / 3;
-  const scores = [
-    { label:'TOTAL SCORE',    val: (d.total_score > 0 ? '+' : '') + d.total_score, color: iColor, bg: iBg },
-    { label:'POSITIVE',       val: '+' + d.positive_score,  color:'#1B7A4B', bg:'#E7F6EE' },
-    { label:'NEGATIVE',       val: d.negative_score,        color:'#C0392B', bg:'#FBEBE9' },
-  ];
-  scores.forEach((s, i) => {
-    const bx = margin + i * (boxW + 3);
-    rect(bx, y, boxW, 22, s.bg);
-    doc.setDrawColor('#E7E7EA'); doc.setLineWidth(0.3);
-    doc.roundedRect(bx, y, boxW, 22, 3, 3, 'S');
-    setFont(7, 'bold', '#9A9A94');
-    doc.text(s.label, bx + boxW/2, y + 6, {align:'center'});
-    setFont(18, 'bold', s.color);
-    doc.text(String(s.val), bx + boxW/2, y + 17, {align:'center'});
-  });
-  y += 30;
+  // ── Summary ───────────────────────────────────────────────────────────────
+  const insightEl = document.getElementById('insightBlock');
+  const summaryText = insightEl ? (insightEl.querySelector('.insight-text')?.innerText || '') : '';
+  if (summaryText) {
+    checkPage(30);
+    setFont(9, 'bold', '#1C1B1B');
+    doc.text('SUMMARY', margin, y);
+    y += 6; hline(y); y += 5;
+    rect(margin, y, content_w, 4, '#F4F4F6'); // top accent
+    rect(margin, y, content_w, 28, '#F4F4F6');
+    setFont(8, 'normal', '#3A3A40');
+    const lines = doc.splitTextToSize(summaryText, content_w - 8);
+    lines.slice(0, 4).forEach((line, i) => {
+      doc.text(line, margin + 4, y + 6 + i * 5.5);
+    });
+    y += Math.max(28, lines.slice(0, 4).length * 5.5 + 8);
+    y += 8;
+  }
+
+  // ── Salesforce ────────────────────────────────────────────────────────────
+  const sf = d.sf_data;
+  if (sf) {
+    checkPage(40);
+    setFont(9, 'bold', '#1C1B1B');
+    doc.text('SALESFORCE RECORD', margin, y);
+    y += 6; hline(y); y += 5;
+
+    const sfFields = [
+      ['Account ID',     sf.account_id],
+      ['Account Status', sf.account_status],
+      ['Account Owner',  sf.account_owner],
+      ['BD Owner',       sf.bd_owner],
+      ['BD Priority Date', sf.bd_priority_date],
+      ['Annual Revenue', sf.annual_revenue],
+    ].filter(([, v]) => v);
+
+    const colW = (content_w - 4) / 2;
+    sfFields.forEach(([label, val], i) => {
+      const col = i % 2, row = Math.floor(i / 2);
+      const bx = margin + col * (colW + 4);
+      const by = y + row * 16;
+      checkPage(16);
+      rect(bx, by, colW, 13, '#F4F4F6');
+      setFont(7, 'bold', '#9A9A94');
+      doc.text(label.toUpperCase(), bx + 3, by + 4.5);
+      setFont(8.5, 'normal', '#1C1B1B');
+      doc.text(String(val).substring(0, 32), bx + 3, by + 10);
+    });
+    y += Math.ceil(sfFields.length / 2) * 16 + 8;
+
+    if (sf.suppression_reason) {
+      checkPage(14);
+      rect(margin, y, content_w, 12, '#FFF1E8');
+      doc.setDrawColor('#FF6F1C'); doc.setLineWidth(0.4);
+      doc.roundedRect(margin, y, content_w, 12, 2, 2, 'S');
+      setFont(8, 'bold', '#FF6F1C');
+      doc.text(`⚠ Suppressed: ${sf.suppression_reason}${sf.suppression_date ? ' · ' + sf.suppression_date : ''}`, margin + 4, y + 7.5);
+      y += 16;
+    }
+    y += 4;
+  }
 
   // ── Signals ───────────────────────────────────────────────────────────────
   setFont(9, 'bold', '#1C1B1B');
@@ -1461,10 +1496,9 @@ async function exportWord() {
   btn.textContent = 'Generating…';
   showToast('Generating Word doc…');
   try {
-    if (!window.docx) throw new Error('docx library not loaded');
+    if (!window.docx || !window.docx.Document) throw new Error('docx library not loaded');
     const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
-            AlignmentType, BorderStyle, WidthType, ShadingType, HeadingLevel,
-            LevelFormat } = window.docx;
+            AlignmentType, BorderStyle, WidthType, ShadingType, HeadingLevel } = window.docx;
 
     const d = lastResult;
     const coInfo = window._lastCoInfo || {};
@@ -1528,13 +1562,24 @@ async function exportWord() {
       ]});
     }
 
-    // Collect insight text if available
+    // Collect summary text from the rendered insight block
     const insightEl = document.getElementById('insightBlock');
-    const summaryText = insightEl ? (insightEl.querySelectorAll('.insight-text')[0]?.textContent || '') : '';
-    const bdText = insightEl ? (insightEl.querySelectorAll('.insight-text')[1]?.textContent || '') : '';
+    const summaryText = insightEl ? (insightEl.querySelector('.insight-text')?.innerText || '') : '';
+
+    const sf = d.sf_data;
+
+    // Build SF rows if available
+    const sfRows = sf ? [
+      ['Account ID',       sf.account_id],
+      ['Account Status',   sf.account_status],
+      ['Account Owner',    sf.account_owner],
+      ['BD Owner',         sf.bd_owner],
+      ['BD Priority Date', sf.bd_priority_date],
+      ['Annual Revenue',   sf.annual_revenue],
+    ].filter(([, v]) => v).map(([label, val]) => infoRow(label, String(val))) : [];
 
     const children = [
-      // Title header
+      // Header
       new Paragraph({ spacing: { after: 60 }, children: [
         new TextRun({ text: 'IMPACT ANALYTICS', bold: true, size: 20, color: '264CD7', font: 'Arial', allCaps: true }),
         new TextRun({ text: '   |   Buying Intent Report', size: 20, color: '9A9A94', font: 'Arial' }),
@@ -1544,7 +1589,7 @@ async function exportWord() {
       ]}),
       new Paragraph({ border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: '264CD7', space: 1 } }, spacing: { after: 240 }, children: [] }),
 
-      // Company name + domain
+      // Company
       new Paragraph({ spacing: { after: 60 }, children: [
         new TextRun({ text: d.company, bold: true, size: 48, color: '1C1B1B', font: 'Arial' }),
       ]}),
@@ -1552,46 +1597,44 @@ async function exportWord() {
         new TextRun({ text: cleanDomain(d.domain), size: 20, color: '264CD7', font: 'Arial' }),
       ]}),
 
-      // Company info table
+      // Company info
       new Table({
         width: { size: 9360, type: WidthType.DXA },
         columnWidths: [2200, 7160],
         rows: [
-          infoRow('Industry',      coInfo.industry),
-          infoRow('Revenue',       coInfo.revenue),
-          infoRow('Headquarters',  coInfo.hq),
-          infoRow('Website',       cleanDomain(d.domain)),
-        ],
+          infoRow('Industry',     coInfo.industry),
+          infoRow('Headquarters', coInfo.hq),
+          infoRow('Website',      cleanDomain(d.domain)),
+        ].filter(r => r),
       }),
-      new Paragraph({ spacing: { after: 300 }, children: [] }),
-
-      // Score section
-      p('INTENT SCORE', { bold: true, size: 18, color: '6B6B72', after: 80 }),
-      new Paragraph({ spacing: { after: 60 }, children: [
-        new TextRun({ text: (d.total_score > 0 ? '+' : '') + d.total_score, bold: true, size: 72, font: 'Arial',
-          color: d.total_score > 0 ? '1B7A4B' : d.total_score < 0 ? 'C0392B' : '9A9A94' }),
-        new TextRun({ text: `   ${d.intent_level}`, bold: true, size: 28, font: 'Arial', color: '264CD7' }),
-      ]}),
-      new Paragraph({ spacing: { after: 60 }, children: [
-        new TextRun({ text: `+${d.positive_score} positive   `, size: 20, font: 'Arial', color: '1B7A4B', bold: true }),
-        new TextRun({ text: `${d.negative_score} negative   `, size: 20, font: 'Arial', color: 'C0392B', bold: true }),
-        new TextRun({ text: `${d.neutral_score} noted`, size: 20, font: 'Arial', color: '9A9A94' }),
-      ]}),
       new Paragraph({ spacing: { after: 300 }, children: [] }),
 
       // Summary
       ...(summaryText ? [
         p('SUMMARY', { bold: true, size: 18, color: '6B6B72', after: 80 }),
-        p(summaryText, { size: 21, after: 200 }),
+        p(summaryText, { size: 21, after: 300 }),
       ] : []),
 
-      // BD recommendation
-      ...(bdText ? [
-        p('HOW TO REACH OUT', { bold: true, size: 18, color: '6B6B72', after: 80 }),
-        p(bdText, { size: 21, after: 300 }),
-      ] : []),
+      // Salesforce record
+      ...(sfRows.length ? [
+        p('SALESFORCE RECORD', { bold: true, size: 18, color: '6B6B72', after: 80 }),
+        new Table({
+          width: { size: 9360, type: WidthType.DXA },
+          columnWidths: [2200, 7160],
+          rows: sfRows,
+        }),
+        ...(sf.suppression_reason ? [
+          new Paragraph({ spacing: { before: 120, after: 80 }, children: [
+            new TextRun({ text: `⚠ Suppressed: ${sf.suppression_reason}${sf.suppression_date ? ' · ' + sf.suppression_date : ''}`, bold: true, size: 20, color: 'FF6F1C', font: 'Arial' }),
+          ]}),
+        ] : []),
+        new Paragraph({ spacing: { after: 300 }, children: [] }),
+      ] : [
+        p('SALESFORCE RECORD', { bold: true, size: 18, color: '6B6B72', after: 80 }),
+        p('Not found in Salesforce.', { size: 20, color: '9A9A94', italic: true, after: 300 }),
+      ]),
 
-      // Signals
+      // Signal breakdown
       p('SIGNAL BREAKDOWN', { bold: true, size: 18, color: '6B6B72', after: 100 }),
       new Table({
         width: { size: 9360, type: WidthType.DXA },
@@ -1605,7 +1648,7 @@ async function exportWord() {
         children: [new TextRun({ text: 'Impact Analytics  |  Buying Intent Engine  |  Data sourced from public records only', size: 17, color: 'AAAAAA', font: 'Arial', italics: true })] }),
     ];
 
-    const doc = new Document({
+    const wordDoc = new Document({
       sections: [{
         properties: {
           page: { size: { width: 12240, height: 15840 }, margin: { top: 1080, right: 1080, bottom: 1080, left: 1080 } }
@@ -1614,8 +1657,8 @@ async function exportWord() {
       }]
     });
 
-    const buffer = await Packer.toBuffer(doc);
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    // Use toBlob() — browser-compatible (toBuffer() is Node.js only)
+    const blob = await Packer.toBlob(wordDoc);
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = `${d.company.replace(/[^a-z0-9]/gi,'_')}_intent_report.docx`;
